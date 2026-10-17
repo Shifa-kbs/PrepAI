@@ -1,0 +1,19 @@
+# Environment variables
+.env
+.env.*
+*.env
+!.env.example
+*.pem
+*.key
+credentials.json
+
+# Dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# OS & Editor
+.DS_Store
+Thumbs.db
