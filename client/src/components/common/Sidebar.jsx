@@ -10,6 +10,7 @@ import {
   User,
   ShieldCheck,
   Lock,
+  Brain,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -17,6 +18,7 @@ export const navItems = [
   { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, enabled: true },
   { name: 'Question Bank', path: '/questions', icon: BookOpen, enabled: true },
   { name: 'Practice', path: '/practice', icon: Code2, enabled: true },
+  { name: 'Aptitude Assessment', path: '/aptitude', icon: Brain, enabled: true },
   { name: 'Mock Interview', path: '/interview', icon: Bot, enabled: true },
   { name: 'Analytics', path: '/analytics', icon: BarChart3, enabled: true },
   { name: 'Study Plan', path: '/study-plan', icon: Calendar, enabled: true },

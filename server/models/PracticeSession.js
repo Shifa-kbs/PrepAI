@@ -9,8 +9,18 @@ const PracticeSessionSchema = new mongoose.Schema({
   },
   mode: {
     type: String,
-    enum: ['topic', 'mixed'],
+    enum: ['topic', 'mixed', 'assessment', 'section-test', 'full-test'],
     default: 'topic',
+  },
+  moduleType: {
+    type: String,
+    enum: ['technical', 'aptitude', 'company-mock'],
+    default: 'technical',
+    index: true,
+  },
+  section: {
+    type: String,
+    default: '',
   },
   category: {
     type: String,

@@ -14,6 +14,7 @@ import ProfilePage from './pages/ProfilePage';
 import QuestionBankPage from './pages/QuestionBankPage';
 import QuestionDetailPage from './pages/QuestionDetailPage';
 import PracticePage from './pages/PracticePage';
+import AptitudePage from './pages/AptitudePage';
 import InterviewPage from './pages/InterviewPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import StudyPlanPage from './pages/StudyPlanPage';
@@ -68,6 +69,7 @@ function App() {
             <Route path="/questions" element={<QuestionBankPage />} />
             <Route path="/questions/:id" element={<QuestionDetailPage />} />
             <Route path="/practice" element={<PracticePage />} />
+            <Route path="/aptitude" element={<AptitudePage />} />
             <Route path="/interview" element={<InterviewPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/study-plan" element={<StudyPlanPage />} />

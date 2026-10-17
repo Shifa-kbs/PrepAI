@@ -5,8 +5,8 @@ export const startPracticeSession = async (payload) => {
   return response.data;
 };
 
-export const getActivePracticeSession = async () => {
-  const response = await api.get('/practice/active');
+export const getActivePracticeSession = async (params = {}) => {
+  const response = await api.get('/practice/active', { params });
   return response.data;
 };
 

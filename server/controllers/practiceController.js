@@ -17,6 +17,61 @@ const sanitizeQuestion = (q) => {
 };
 
 /**
+ * Shared helper to compute rich post-test analytics including topic breakdown & recommendations
+ */
+const computeSessionSummary = (sess, qs) => {
+  const answers = sess.answers || [];
+  const correct = answers.filter((a) => a.isCorrect).length;
+  const attempted = answers.filter((a) => a.status !== 'skipped').length;
+  const wrong = answers.filter((a) => a.status === 'wrong').length;
+  const skipped = Math.max(0, sess.totalQuestions - attempted);
+  const review = answers.filter((a) => a.markedForReview).length;
+
+  const topicStats = {};
+  (qs || []).forEach((q) => {
+    const qTopic = q.topic || q.category || 'General';
+    if (!topicStats[qTopic]) {
+      topicStats[qTopic] = {
+        topic: qTopic,
+        category: q.category,
+        total: 0,
+        correct: 0,
+      };
+    }
+    topicStats[qTopic].total += 1;
+    const ans = answers.find(
+      (a) => a.question.toString() === q._id.toString()
+    );
+    if (ans && ans.isCorrect) {
+      topicStats[qTopic].correct += 1;
+    }
+  });
+
+  const topicBreakdown = Object.values(topicStats).map((t) => ({
+    ...t,
+    accuracy: t.total > 0 ? Math.round((t.correct / t.total) * 100) : 0,
+  }));
+
+  const recommendedTopics = topicBreakdown
+    .filter((t) => t.accuracy < 70)
+    .map((t) => t.topic);
+
+  return {
+    totalQuestions: sess.totalQuestions,
+    attemptedCount: attempted,
+    correctCount: correct,
+    wrongCount: wrong,
+    skippedCount: skipped,
+    reviewCount: review,
+    score: sess.score,
+    accuracy: sess.accuracy,
+    timeTakenSeconds: sess.timeTakenSeconds,
+    topicBreakdown,
+    recommendedTopics,
+  };
+};
+
+/**
  * @desc    Start or resume a practice session
  * @route   POST /api/practice/start
  * @access  Private
@@ -46,11 +101,23 @@ const startSession = async (req, res, next) => {
     }
     const count = Math.min(50, parsedCount);
 
-    // Check if user already has an active in-progress session
-    const existingActive = await PracticeSession.findOne({
+    const {
+      topic,
+      type,
+      reviewMistakes = false,
+      moduleType = 'technical',
+      section,
+    } = req.body;
+
+    // Check if user already has an active in-progress session for this module type
+    const activeQuery = {
       user: req.user._id,
       status: 'in-progress',
-    });
+    };
+    if (moduleType) {
+      activeQuery.moduleType = moduleType;
+    }
+    const existingActive = await PracticeSession.findOne(activeQuery);
 
     if (existingActive) {
       if (!forceNew) {
@@ -66,7 +133,7 @@ const startSession = async (req, res, next) => {
         return res.status(200).json({
           success: true,
           resumed: true,
-          message: 'Resuming active practice session',
+          message: 'Resuming active session',
           session: activeWithQuestions,
         });
       } else {
@@ -76,16 +143,19 @@ const startSession = async (req, res, next) => {
       }
     }
 
-    const {
-      topic,
-      type,
-      reviewMistakes = false,
-    } = req.body;
-
     // Build question selection filter
     const query = {};
 
-    if (mode === 'topic' && category && category !== 'All' && category !== 'all') {
+    const isFullAptitude =
+      category === 'Full Aptitude Test' ||
+      category === 'Aptitude' ||
+      section === 'Full Aptitude Test';
+
+    if (isFullAptitude) {
+      query.category = {
+        $in: ['Quantitative Aptitude', 'Logical Reasoning', 'Verbal Ability'],
+      };
+    } else if (mode !== 'mixed' && category && category !== 'All' && category !== 'all') {
       query.category = category;
     }
 
@@ -183,22 +253,77 @@ const startSession = async (req, res, next) => {
     const seenIds = new Set();
     const selectedQuestions = [];
 
-    for (const q of prioritizedPool) {
-      const idStr = q._id.toString();
-      if (!seenIds.has(idStr)) {
-        seenIds.add(idStr);
-        selectedQuestions.push(q);
-        if (selectedQuestions.length === count) break;
+    if (isFullAptitude && count > 1) {
+      // Balanced selection across Quantitative Aptitude, Logical Reasoning, and Verbal Ability
+      const quantPool = prioritizedPool.filter((q) => q.category === 'Quantitative Aptitude');
+      const logicalPool = prioritizedPool.filter((q) => q.category === 'Logical Reasoning');
+      const verbalPool = prioritizedPool.filter((q) => q.category === 'Verbal Ability');
+
+      const targetPerSec = Math.floor(count / 3);
+      const remainder = count % 3;
+
+      const pickFrom = (pool, num) => {
+        const picked = [];
+        for (const q of pool) {
+          const idStr = q._id.toString();
+          if (!seenIds.has(idStr)) {
+            seenIds.add(idStr);
+            picked.push(q);
+            if (picked.length === num) break;
+          }
+        }
+        return picked;
+      };
+
+      const quantPick = pickFrom(quantPool, targetPerSec + (remainder > 0 ? 1 : 0));
+      const logicalPick = pickFrom(logicalPool, targetPerSec + (remainder > 1 ? 1 : 0));
+      const verbalPick = pickFrom(verbalPool, targetPerSec);
+
+      selectedQuestions.push(...quantPick, ...logicalPick, ...verbalPick);
+
+      // If still need more to satisfy count, fill from remaining pool
+      if (selectedQuestions.length < count) {
+        for (const q of prioritizedPool) {
+          const idStr = q._id.toString();
+          if (!seenIds.has(idStr)) {
+            seenIds.add(idStr);
+            selectedQuestions.push(q);
+            if (selectedQuestions.length === count) break;
+          }
+        }
+      }
+    } else {
+      for (const q of prioritizedPool) {
+        const idStr = q._id.toString();
+        if (!seenIds.has(idStr)) {
+          seenIds.add(idStr);
+          selectedQuestions.push(q);
+          if (selectedQuestions.length === count) break;
+        }
       }
     }
 
     const questionIds = selectedQuestions.map((q) => q._id);
     const sessionCategory = mode === 'mixed' ? 'Mixed Topics' : category;
 
+    const resolvedModuleType =
+      moduleType ||
+      (isFullAptitude || category.includes('Aptitude') || category.includes('Reasoning') || category.includes('Verbal')
+        ? 'aptitude'
+        : 'technical');
+
+    const resolvedSection =
+      section ||
+      (isFullAptitude
+        ? 'Full Aptitude Test'
+        : category);
+
     // Create new PracticeSession
     const session = new PracticeSession({
       user: req.user._id,
       mode,
+      moduleType: resolvedModuleType,
+      section: resolvedSection,
       category: sessionCategory,
       difficulty,
       totalQuestions: selectedQuestions.length,
@@ -244,10 +369,15 @@ const startSession = async (req, res, next) => {
  */
 const getActiveSession = async (req, res, next) => {
   try {
-    const session = await PracticeSession.findOne({
+    const activeQuery = {
       user: req.user._id,
       status: 'in-progress',
-    })
+    };
+    if (req.query.moduleType) {
+      activeQuery.moduleType = req.query.moduleType;
+    }
+
+    const session = await PracticeSession.findOne(activeQuery)
       .populate('questions')
       .lean();
 
@@ -342,6 +472,7 @@ const getSessionById = async (req, res, next) => {
       return res.status(200).json({
         success: true,
         session: populatedSession,
+        summary: computeSessionSummary(session, populatedSession.questions),
       });
     } else {
       const populatedSession = await PracticeSession.findById(id)
@@ -408,6 +539,27 @@ const submitSessionAnswer = async (req, res, next) => {
         success: false,
         message: `Cannot submit answer. Session is already ${session.status}`,
       });
+    }
+
+    const isTimed = session.timeLimitMinutes > 0;
+    const isAssessment =
+      session.mode === 'assessment' ||
+      session.mode === 'section-test' ||
+      session.mode === 'full-test' ||
+      isTimed;
+
+    // Strict server-side timer validation with 15-second network buffer
+    if (isTimed) {
+      const elapsedSeconds =
+        (Date.now() - new Date(session.startedAt).getTime()) / 1000;
+      if (elapsedSeconds > session.timeLimitMinutes * 60 + 15) {
+        return res.status(400).json({
+          success: false,
+          expired: true,
+          message:
+            'Time limit for this assessment has expired. Please submit and finish your test.',
+        });
+      }
     }
 
     // Verify question belongs to this session
@@ -492,7 +644,12 @@ const submitSessionAnswer = async (req, res, next) => {
 
     await session.save();
 
-    // Synchronize per-user QuestionProgress
+    // Synchronize per-user QuestionProgress without double-counting on answer update
+    const wasPreviouslyAnsweredInSession =
+      existingAnswerIdx >= 0 && session.answers[existingAnswerIdx].status !== 'skipped';
+    const previousWasCorrect =
+      wasPreviouslyAnsweredInSession && session.answers[existingAnswerIdx].isCorrect;
+
     let progress = await QuestionProgress.findOne({
       user: req.user._id,
       question: question._id,
@@ -510,14 +667,28 @@ const submitSessionAnswer = async (req, res, next) => {
         lastAttemptedAt: new Date(),
       });
     } else {
-      progress.attempts += 1;
-      if (isCorrect) {
-        progress.correctAttempts += 1;
-        progress.status = 'solved';
+      if (!wasPreviouslyAnsweredInSession) {
+        progress.attempts += 1;
+        if (isCorrect) {
+          progress.correctAttempts += 1;
+          progress.status = 'solved';
+        } else {
+          progress.incorrectAttempts += 1;
+          if (progress.status !== 'solved') {
+            progress.status = 'attempted';
+          }
+        }
       } else {
-        progress.incorrectAttempts += 1;
-        if (progress.status !== 'solved') {
-          progress.status = 'attempted';
+        // Answer was changed within the current active session
+        if (previousWasCorrect !== isCorrect) {
+          if (isCorrect) {
+            progress.correctAttempts += 1;
+            progress.incorrectAttempts = Math.max(0, progress.incorrectAttempts - 1);
+            progress.status = 'solved';
+          } else {
+            progress.correctAttempts = Math.max(0, progress.correctAttempts - 1);
+            progress.incorrectAttempts += 1;
+          }
         }
       }
       progress.timeSpentSeconds += parsedTime;
@@ -525,8 +696,23 @@ const submitSessionAnswer = async (req, res, next) => {
     }
     await progress.save();
 
+    // During timed assessments, strictly prevent leaking answer keys or explanations
+    if (isAssessment) {
+      return res.status(200).json({
+        success: true,
+        isAssessment: true,
+        selectedAnswerIndex,
+        message: 'Answer recorded successfully',
+        sessionStats: {
+          totalAttempted: attemptedCount,
+          totalQuestions: session.totalQuestions,
+        },
+      });
+    }
+
     return res.status(200).json({
       success: true,
+      isAssessment: false,
       isCorrect,
       selectedAnswerIndex,
       correctAnswerIndex: question.correctAnswerIndex,
@@ -636,7 +822,7 @@ const finishSession = async (req, res, next) => {
       });
     }
 
-    // If already completed, return existing completed session
+    // If already completed, return existing completed session with summary
     if (session.status === 'completed') {
       const completedSession = await PracticeSession.findById(id)
         .populate({
@@ -648,6 +834,7 @@ const finishSession = async (req, res, next) => {
       return res.status(200).json({
         success: true,
         session: completedSession,
+        summary: computeSessionSummary(session, completedSession.questions),
         alreadyCompleted: true,
       });
     }
@@ -688,18 +875,8 @@ const finishSession = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       session: finishedWithSolutions,
-      summary: {
-        totalQuestions: session.totalQuestions,
-        attemptedCount,
-        correctCount,
-        wrongCount,
-        skippedCount,
-        reviewCount,
-        score: session.score,
-        accuracy: session.accuracy,
-        timeTakenSeconds: session.timeTakenSeconds,
-      },
-      message: 'Practice session completed successfully',
+      summary: computeSessionSummary(session, finishedWithSolutions.questions),
+      message: 'Assessment completed successfully',
     });
   } catch (error) {
     return next(error);
@@ -721,13 +898,16 @@ const getSessionHistory = async (req, res, next) => {
       user: req.user._id,
       status: 'completed',
     };
+    if (req.query.moduleType) {
+      query.moduleType = req.query.moduleType;
+    }
 
     const total = await PracticeSession.countDocuments(query);
     const sessions = await PracticeSession.find(query)
       .sort({ completedAt: -1 })
       .skip(skip)
       .limit(limit)
-      .select('category difficulty mode totalQuestions score accuracy timeTakenSeconds completedAt answers')
+      .select('category difficulty mode moduleType section totalQuestions score accuracy timeTakenSeconds completedAt answers')
       .lean();
 
     // Map summary indicators for history cards
@@ -738,6 +918,8 @@ const getSessionHistory = async (req, res, next) => {
         category: s.category,
         difficulty: s.difficulty,
         mode: s.mode,
+        moduleType: s.moduleType || 'technical',
+        section: s.section || s.category,
         totalQuestions: s.totalQuestions,
         correctCount,
         score: s.score,
@@ -784,6 +966,79 @@ const abandonActiveSession = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Get aptitude section statistics, question counts, and user solved progress
+ * @route   GET /api/practice/aptitude/stats
+ * @access  Private
+ */
+const getAptitudeStats = async (req, res, next) => {
+  try {
+    const aptitudeCategories = [
+      'Quantitative Aptitude',
+      'Logical Reasoning',
+      'Verbal Ability',
+    ];
+
+    const questions = await Question.find({
+      category: { $in: aptitudeCategories },
+    })
+      .select('category topic difficulty slug')
+      .lean();
+
+    const questionIds = questions.map((q) => q._id);
+    const progressList = await QuestionProgress.find({
+      user: req.user._id,
+      question: { $in: questionIds },
+    }).lean();
+
+    const progressMap = new Map();
+    progressList.forEach((p) => {
+      progressMap.set(p.question.toString(), p);
+    });
+
+    const sections = {};
+    aptitudeCategories.forEach((cat) => {
+      sections[cat] = {
+        name: cat,
+        total: 0,
+        solved: 0,
+        attempted: 0,
+        difficulties: { Easy: 0, Medium: 0, Hard: 0 },
+        topics: {},
+      };
+    });
+
+    questions.forEach((q) => {
+      const sec = sections[q.category];
+      if (sec) {
+        sec.total += 1;
+        if (q.difficulty && sec.difficulties[q.difficulty] !== undefined) {
+          sec.difficulties[q.difficulty] += 1;
+        }
+        const top = q.topic || 'General';
+        sec.topics[top] = (sec.topics[top] || 0) + 1;
+
+        const prog = progressMap.get(q._id.toString());
+        if (prog) {
+          if (prog.status === 'solved') {
+            sec.solved += 1;
+          } else if (prog.attempts > 0) {
+            sec.attempted += 1;
+          }
+        }
+      }
+    });
+
+    return res.status(200).json({
+      success: true,
+      sections,
+      totalAptitudeQuestions: questions.length,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   startSession,
   getActiveSession,
@@ -793,4 +1048,6 @@ module.exports = {
   finishSession,
   getSessionHistory,
   abandonActiveSession,
+  getAptitudeStats,
+  computeSessionSummary,
 };

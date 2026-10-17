@@ -9,6 +9,7 @@ const {
   finishSession,
   getSessionHistory,
   abandonActiveSession,
+  getAptitudeStats,
 } = require('../controllers/practiceController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -18,6 +19,7 @@ router.use(protect);
 router.post('/start', startSession);
 router.get('/active', getActiveSession);
 router.get('/history', getSessionHistory);
+router.get('/aptitude/stats', getAptitudeStats);
 router.post('/abandon', abandonActiveSession);
 
 router.get('/:id', getSessionById);

@@ -12,6 +12,7 @@ import {
   ArrowUpRight,
   Sparkles,
   ArrowRight,
+  Brain,
 } from 'lucide-react';
 import Card from '../components/common/Card';
 
@@ -52,19 +53,28 @@ const DashboardPage = () => {
 
   const quickActions = [
     {
+      title: 'Aptitude Assessment',
+      description: 'Practice Quantitative, Logical, and Verbal reasoning with full-length timed placement tests',
+      icon: Brain,
+      phaseBadge: 'Aptitude Hub',
+      path: '/aptitude',
+      ctaText: 'Open Aptitude Assessment',
+      enabled: true,
+    },
+    {
       title: 'Explore Question Bank',
       description: 'Browse, filter, and practice curated interview questions with instant verification',
       icon: BookOpen,
-      phaseBadge: 'Phase 3 Active',
+      phaseBadge: 'Question Bank',
       path: '/questions',
       ctaText: 'Open Question Bank',
       enabled: true,
     },
     {
-      title: 'Start Coding Practice',
-      description: 'Solve timed coding tasks with instant test feedback and track accuracy',
+      title: 'Start Practice Session',
+      description: 'Solve timed technical problems with instant test feedback and track accuracy',
       icon: Code2,
-      phaseBadge: 'Phase 4 Active',
+      phaseBadge: 'Technical Practice',
       path: '/practice',
       ctaText: 'Start Practice Session',
       enabled: true,
