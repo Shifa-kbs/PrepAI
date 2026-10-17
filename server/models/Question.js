@@ -1,6 +1,22 @@
 const mongoose = require('mongoose');
 
+const generateSlug = (title, category) => {
+  const base = `${category || 'general'}-${title || 'question'}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+  return base;
+};
+
 const QuestionSchema = new mongoose.Schema({
+  slug: {
+    type: String,
+    unique: true,
+    sparse: true,
+    trim: true,
+    lowercase: true,
+    index: true,
+  },
   title: {
     type: String,
     required: [true, 'Question title is required'],
@@ -20,9 +36,24 @@ const QuestionSchema = new mongoose.Schema({
       'OOP',
       'JavaScript',
       'React',
+      'Web Development',
+      'Quantitative Aptitude',
+      'Logical Reasoning',
+      'Verbal Ability',
       'HR',
     ],
     index: true,
+  },
+  topic: {
+    type: String,
+    trim: true,
+    default: '',
+    index: true,
+  },
+  subtopic: {
+    type: String,
+    trim: true,
+    default: '',
   },
   difficulty: {
     type: String,
@@ -31,6 +62,7 @@ const QuestionSchema = new mongoose.Schema({
     index: true,
   },
   companyTags: [{ type: String, index: true }],
+  tags: [{ type: String, index: true }],
   description: {
     type: String,
     required: [true, 'Question description is required'],
@@ -55,8 +87,28 @@ const QuestionSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['conceptual', 'coding', 'mcq'],
+    enum: ['conceptual', 'coding', 'mcq', 'sql', 'output-prediction', 'scenario'],
     default: 'conceptual',
+    index: true,
+  },
+  constraints: [{ type: String }],
+  examples: [
+    {
+      input: { type: String, default: '' },
+      output: { type: String, default: '' },
+      explanation: { type: String, default: '' },
+    },
+  ],
+  testCases: [
+    {
+      input: { type: String, default: '' },
+      expectedOutput: { type: String, default: '' },
+      isHidden: { type: Boolean, default: false },
+    },
+  ],
+  source: {
+    type: String,
+    default: '',
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -68,4 +120,18 @@ const QuestionSchema = new mongoose.Schema({
   },
 });
 
+// Auto-generate slug before validation if missing
+QuestionSchema.pre('validate', function (next) {
+  if (!this.slug && this.title) {
+    this.slug = generateSlug(this.title, this.category);
+  }
+  next();
+});
+
+// Compound indexes for optimal query performance
+QuestionSchema.index({ category: 1, difficulty: 1 });
+QuestionSchema.index({ category: 1, topic: 1 });
+QuestionSchema.index({ category: 1, type: 1 });
+
 module.exports = mongoose.model('Question', QuestionSchema);
+

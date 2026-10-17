@@ -76,6 +76,12 @@ const startSession = async (req, res, next) => {
       }
     }
 
+    const {
+      topic,
+      type,
+      reviewMistakes = false,
+    } = req.body;
+
     // Build question selection filter
     const query = {};
 
@@ -87,7 +93,15 @@ const startSession = async (req, res, next) => {
       query.difficulty = difficulty;
     }
 
-    // Sample or fetch matching questions
+    if (topic && topic !== 'All' && topic !== 'all') {
+      query.topic = topic;
+    }
+
+    if (type && type !== 'All' && type !== 'all') {
+      query.type = type;
+    }
+
+    // Fetch candidate matching questions (excluding solutions)
     const matchingQuestions = await Question.find(query)
       .select('-correctAnswerIndex -sampleAnswer -explanation')
       .lean();
@@ -102,11 +116,83 @@ const startSession = async (req, res, next) => {
     const availableCount = matchingQuestions.length;
     const isPartial = availableCount < count;
 
-    // Shuffle questions randomly
-    const shuffled = matchingQuestions.sort(() => 0.5 - Math.random());
-    const selectedQuestions = shuffled.slice(0, count);
-    const questionIds = selectedQuestions.map((q) => q._id);
+    // Fisher-Yates shuffle helper
+    const shuffleArray = (array) => {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    };
 
+    // Load user's question progress to prioritize unattempted & review questions
+    const matchingIds = matchingQuestions.map((q) => q._id);
+    const userProgress = await QuestionProgress.find({
+      user: req.user._id,
+      question: { $in: matchingIds },
+    }).lean();
+
+    const progressMap = new Map();
+    userProgress.forEach((p) => progressMap.set(p.question.toString(), p));
+
+    const unattempted = [];
+    const wrongOrAttempted = [];
+    const solved = [];
+
+    matchingQuestions.forEach((q) => {
+      const prog = progressMap.get(q._id.toString());
+      if (!prog || prog.attempts === 0) {
+        unattempted.push(q);
+      } else if (prog.status === 'attempted' || prog.incorrectAttempts > prog.correctAttempts) {
+        wrongOrAttempted.push(q);
+      } else {
+        solved.push(q);
+      }
+    });
+
+    // Sort already attempted questions so least recently attempted appear first
+    const sortByLastAttempt = (a, b) => {
+      const timeA = progressMap.get(a._id.toString())?.lastAttemptedAt || 0;
+      const timeB = progressMap.get(b._id.toString())?.lastAttemptedAt || 0;
+      return new Date(timeA).getTime() - new Date(timeB).getTime();
+    };
+
+    wrongOrAttempted.sort(sortByLastAttempt);
+    solved.sort(sortByLastAttempt);
+
+    let prioritizedPool = [];
+    if (reviewMistakes) {
+      // User specifically requested to review previous mistakes
+      prioritizedPool = [
+        ...shuffleArray(wrongOrAttempted),
+        ...shuffleArray(unattempted),
+        ...solved,
+      ];
+    } else {
+      // Standard practice: prioritize fresh unattempted questions first,
+      // followed by mistakes that need reinforcement, followed by solved
+      prioritizedPool = [
+        ...shuffleArray(unattempted),
+        ...shuffleArray(wrongOrAttempted),
+        ...solved,
+      ];
+    }
+
+    // Ensure strictly unique questions within the session using a Set
+    const seenIds = new Set();
+    const selectedQuestions = [];
+
+    for (const q of prioritizedPool) {
+      const idStr = q._id.toString();
+      if (!seenIds.has(idStr)) {
+        seenIds.add(idStr);
+        selectedQuestions.push(q);
+        if (selectedQuestions.length === count) break;
+      }
+    }
+
+    const questionIds = selectedQuestions.map((q) => q._id);
     const sessionCategory = mode === 'mixed' ? 'Mixed Topics' : category;
 
     // Create new PracticeSession

@@ -590,21 +590,25 @@ const questionsData = [
   },
 ];
 
+const { allQuestions } = require('../data/questions');
+
+const slugify = (text) => {
+  return String(text || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+};
+
 const seedDatabase = async (options = {}) => {
   try {
     if (mongoose.connection.readyState !== 1) {
       const mongoURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/prepai';
-      console.log(`[Seed Service] Connecting to MongoDB at ${mongoURI}...`);
+      console.log(`[Seed Service] Connecting to MongoDB...`);
       await mongoose.connect(mongoURI);
     }
 
-    console.log('[Seed Service] Cleaning existing database collections...');
-    await Question.deleteMany({});
-    await QuestionProgress.deleteMany({});
-
-    console.log(`[Seed Service] Inserting ${questionsData.length} curated interview questions...`);
-
-    // Create an Admin user if non-existent
+    // 1. Ensure default Admin user exists
     let adminUser = await User.findOne({ role: 'admin' });
     if (!adminUser) {
       adminUser = await User.create({
@@ -619,31 +623,101 @@ const seedDatabase = async (options = {}) => {
       console.log('[Seed Service] Created default Admin User: admin@prepai.com');
     }
 
-    const seededQuestions = questionsData.map((q) => ({
-      ...q,
-      createdBy: adminUser._id,
+    // 2. Non-destructive migration: Assign slug to any existing MongoDB questions missing one
+    const existingWithoutSlug = await Question.find({
+      $or: [{ slug: { $exists: false } }, { slug: null }, { slug: '' }],
+    });
+
+    if (existingWithoutSlug.length > 0) {
+      console.log(`[Seed Service] Migrating ${existingWithoutSlug.length} existing database questions with stable slugs...`);
+      for (const eq of existingWithoutSlug) {
+        let baseSlug = `${slugify(eq.category)}-${slugify(eq.title)}`;
+        // Check if slug collision exists
+        const exists = await Question.findOne({ slug: baseSlug, _id: { $ne: eq._id } });
+        if (exists) {
+          baseSlug = `${baseSlug}-${eq._id.toString().slice(-4)}`;
+        }
+        eq.slug = baseSlug;
+        await eq.save();
+      }
+      console.log('[Seed Service] Existing questions migrated successfully.');
+    }
+
+    // 3. Aggregate seed data (questionsData + modular questions), deduplicated by slug
+    const combinedQuestionsMap = new Map();
+
+    // Add legacy seed data with normalized slugs
+    questionsData.forEach((q) => {
+      const slug = q.slug || `${slugify(q.category)}-${slugify(q.title)}`;
+      combinedQuestionsMap.set(slug, { ...q, slug });
+    });
+
+    // Add modular validated questions (higher precedence)
+    allQuestions.forEach((q) => {
+      combinedQuestionsMap.set(q.slug, q);
+    });
+
+    const uniqueQuestionsToSeed = Array.from(combinedQuestionsMap.values());
+    console.log(`[Seed Service] Performing non-destructive, idempotent upsert for ${uniqueQuestionsToSeed.length} questions...`);
+
+    // 4. Idempotent bulk upsert (preserves existing documents and user progress)
+    const bulkOps = uniqueQuestionsToSeed.map((q) => ({
+      updateOne: {
+        filter: { slug: q.slug },
+        update: {
+          $set: {
+            ...q,
+            createdBy: adminUser._id,
+          },
+          $setOnInsert: {
+            createdAt: new Date(),
+          },
+        },
+        upsert: true,
+      },
     }));
 
-    await Question.insertMany(seededQuestions);
+    const result = await Question.bulkWrite(bulkOps);
 
     console.log('====================================================');
-    console.log(`[Seed Success] Successfully seeded ${questionsData.length} questions across 11 categories!`);
-    console.log('Categories distribution:');
-    const categoryCounts = {};
-    questionsData.forEach((q) => {
-      categoryCounts[q.category] = (categoryCounts[q.category] || 0) + 1;
+    console.log(`[Seed Success] Idempotent sync completed!`);
+    console.log(`Inserted (new): ${result.upsertedCount}`);
+    console.log(`Updated (existing): ${result.modifiedCount}`);
+    console.log(`Matched (unchanged): ${result.matchedCount}`);
+
+    // Report current total and per-category breakdown in database
+    const totalInDB = await Question.countDocuments();
+    const categoriesInDB = await Question.aggregate([
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]);
+
+    console.log(`Total questions in database: ${totalInDB}`);
+    console.log('Category distribution in MongoDB:');
+    const displayTable = {};
+    categoriesInDB.forEach((c) => {
+      displayTable[c._id] = c.count;
     });
-    console.table(categoryCounts);
+    console.table(displayTable);
     console.log('====================================================');
 
     if (!options.skipDisconnect && require.main === module) {
+      await mongoose.disconnect();
       process.exit(0);
     }
+
+    return {
+      success: true,
+      totalInDB,
+      upsertedCount: result.upsertedCount,
+      modifiedCount: result.modifiedCount,
+    };
   } catch (error) {
     console.error(`[Seed Error] ${error.message}`);
     if (require.main === module) {
       process.exit(1);
     }
+    throw error;
   }
 };
 
@@ -652,3 +726,4 @@ if (require.main === module) {
 }
 
 module.exports = seedDatabase;
+

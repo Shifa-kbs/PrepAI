@@ -24,11 +24,15 @@ const CATEGORIES = [
   'OOP',
   'JavaScript',
   'React',
+  'Web Development',
+  'Quantitative Aptitude',
+  'Logical Reasoning',
+  'Verbal Ability',
   'HR',
 ];
 
 const DIFFICULTIES = ['All', 'Easy', 'Medium', 'Hard'];
-const QUESTION_COUNTS = [3, 5, 10, 15, 20];
+const QUESTION_COUNTS = [5, 10, 15, 20, 30];
 const TIMER_OPTIONS = [
   { label: 'No Limit (Untimed)', value: 0 },
   { label: '10 Minutes', value: 10 },
@@ -43,6 +47,7 @@ const PracticeSetup = ({ onStartSession, onResumeSession, onDiscardActive, activ
   const [difficulty, setDifficulty] = useState('All');
   const [questionCount, setQuestionCount] = useState(10);
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(0);
+  const [reviewMistakes, setReviewMistakes] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -52,6 +57,7 @@ const PracticeSetup = ({ onStartSession, onResumeSession, onDiscardActive, activ
       difficulty,
       questionCount,
       timeLimitMinutes,
+      reviewMistakes,
       forceNew: true,
     });
   };
@@ -226,10 +232,21 @@ const PracticeSetup = ({ onStartSession, onResumeSession, onDiscardActive, activ
                 </button>
               ))}
             </div>
+            <div className="pt-2 border-t border-slate-800/80">
+              <label className="flex items-center space-x-2.5 cursor-pointer text-xs text-slate-300 hover:text-white">
+                <input
+                  type="checkbox"
+                  checked={reviewMistakes}
+                  onChange={(e) => setReviewMistakes(e.target.checked)}
+                  className="rounded border-slate-700 bg-slate-950 text-brand-600 focus:ring-brand-500 h-4 w-4"
+                />
+                <span className="font-medium">Prioritize previous mistakes & unsolved questions</span>
+              </label>
+            </div>
             <p className="text-[11px] text-slate-400 leading-normal">
               {mode === 'mixed'
-                ? 'Mixed mode selects from all 16+ available technical questions across domains.'
-                : `Topic mode selects from ${category}. If the category has fewer questions than requested, all available questions will be included.`}
+                ? 'Mixed mode selects questions across all technical and placement categories.'
+                : `Topic mode selects questions from ${category}. If the category has fewer questions than requested, all available questions will be included.`}
             </p>
           </Card>
         </div>

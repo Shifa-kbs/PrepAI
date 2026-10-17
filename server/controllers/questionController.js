@@ -44,6 +44,10 @@ const getQuestions = async (req, res, next) => {
         'OOP',
         'JavaScript',
         'React',
+        'Web Development',
+        'Quantitative Aptitude',
+        'Logical Reasoning',
+        'Verbal Ability',
         'HR',
       ];
       if (validCategories.includes(category)) {
@@ -252,6 +256,10 @@ const getQuestionFilters = async (req, res, next) => {
       'OOP',
       'JavaScript',
       'React',
+      'Web Development',
+      'Quantitative Aptitude',
+      'Logical Reasoning',
+      'Verbal Ability',
       'HR',
     ];
     const difficulties = ['Easy', 'Medium', 'Hard'];

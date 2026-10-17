@@ -13,6 +13,10 @@ const CATEGORIES = [
   'OOP',
   'JavaScript',
   'React',
+  'Web Development',
+  'Quantitative Aptitude',
+  'Logical Reasoning',
+  'Verbal Ability',
   'HR',
 ];
 
