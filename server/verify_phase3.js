@@ -59,6 +59,27 @@ async function runPhase3Verification() {
     console.log(`[Test Server] Running on port ${port}`);
 
     try {
+      // Wait for Mongoose connection if currently connecting
+      if (mongoose.connection.readyState !== 1) {
+        console.log(`[Setup] Waiting for MongoDB connection (current readyState: ${mongoose.connection.readyState})...`);
+        await new Promise((resolve, reject) => {
+          if (mongoose.connection.readyState === 1) return resolve();
+          const timer = setTimeout(() => {
+            if (mongoose.connection.readyState === 1) resolve();
+            else reject(new Error(`Timed out waiting for MongoDB connection (readyState: ${mongoose.connection.readyState})`));
+          }, 8000);
+          mongoose.connection.once('connected', () => {
+            clearTimeout(timer);
+            resolve();
+          });
+          mongoose.connection.once('error', (err) => {
+            clearTimeout(timer);
+            reject(err);
+          });
+        });
+        console.log('✅ MongoDB connection ready');
+      }
+
       // 0. Ensure user and questions exist
       const testEmail = `phase3_tester_${Date.now()}@prepai.dev`;
       const testPassword = 'Password123!';
@@ -196,15 +217,23 @@ async function runPhase3Verification() {
 
       // 9. Answer submission correctly updates QuestionProgress & counts attempts
       console.log('\n[Test 9 & 10] Testing Answer Submission (POST /api/questions/:id/submit)...');
-      // Fetch full question from DB to know what the correct answer actually is
-      const dbQ = await Question.findById(firstQ._id).select('+correctAnswerIndex +explanation');
+      // Fetch an MCQ question from DB to know what the correct answer actually is
+      let dbQ = await Question.findById(firstQ._id).select('+correctAnswerIndex +explanation options');
+      let targetQId = firstQ._id;
+      if (typeof dbQ.correctAnswerIndex !== 'number') {
+        const foundMcq = await Question.findOne({ correctAnswerIndex: { $exists: true, $ne: null } }).select('+correctAnswerIndex +explanation options');
+        if (foundMcq) {
+          dbQ = foundMcq;
+          targetQId = foundMcq._id;
+        }
+      }
       const correctIdx = dbQ.correctAnswerIndex ?? 0;
       const wrongIdx = (correctIdx + 1) % (dbQ.options?.length || 4);
 
       // Submit incorrect answer first
-      console.log(`Submitting incorrect answer (index ${wrongIdx})...`);
+      console.log(`Submitting incorrect answer (index ${wrongIdx}) for question ${targetQId}...`);
       const wrongSubmitRes = await makeRequest(
-        `${baseUrl}/questions/${firstQ._id}/submit`,
+        `${baseUrl}/questions/${targetQId}/submit`,
         'POST',
         JSON.stringify({ selectedAnswerIndex: wrongIdx, timeSpentSeconds: 45 }),
         authHeaders
@@ -223,7 +252,7 @@ async function runPhase3Verification() {
       // Submit correct answer
       console.log(`Submitting correct answer (index ${correctIdx})...`);
       const correctSubmitRes = await makeRequest(
-        `${baseUrl}/questions/${firstQ._id}/submit`,
+        `${baseUrl}/questions/${targetQId}/submit`,
         'POST',
         JSON.stringify({ selectedAnswerIndex: correctIdx, timeSpentSeconds: 30 }),
         authHeaders
@@ -247,11 +276,11 @@ async function runPhase3Verification() {
       if (solvedRes.status !== 200 || !solvedRes.body.success) {
         throw new Error(`Solved filter request failed: ${JSON.stringify(solvedRes.body)}`);
       }
-      const hasSolvedQ = solvedRes.body.questions.some((q) => q._id.toString() === firstQ._id.toString());
+      const hasSolvedQ = solvedRes.body.questions.some((q) => q._id.toString() === targetQId.toString());
       if (!hasSolvedQ) {
         throw new Error('Solved filter did not return the just-solved question!');
       }
-      console.log(`✅ Solved filter verified: found ${solvedRes.body.questions.length} solved question(s) including ${firstQ.title}.`);
+      console.log(`✅ Solved filter verified: found ${solvedRes.body.questions.length} solved question(s) including ${dbQ.title || 'target question'}.`);
 
       // 12. Bookmark / save functionality
       console.log('\n[Test 12] Testing Bookmark toggle (POST /api/questions/:id/bookmark)...');

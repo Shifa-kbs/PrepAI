@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { User, Mail, GraduationCap, Code2, FileText, Calendar, Save, Info } from 'lucide-react';
+import { User, Mail, GraduationCap, Code2, Calendar, Save, CheckCircle2 } from 'lucide-react';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
+import { updateUserProfile } from '../services/authService';
 import toast from 'react-hot-toast';
 
 const ProfilePage = () => {
   const { user, setUser } = useAuth();
+  const [isSaving, setIsSaving] = useState(false);
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -23,62 +25,57 @@ const ProfilePage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
+    setIsSaving(true);
 
-    // Update local context user state for immediate feedback
-    const updatedUser = {
-      ...user,
-      name: formData.name,
-      profile: {
-        ...user?.profile,
-        college: formData.college,
-        degree: formData.degree,
+    try {
+      const payload = {
+        name: formData.name.trim(),
+        college: formData.college.trim(),
+        degree: formData.degree.trim(),
         graduationYear: formData.graduationYear ? Number(formData.graduationYear) : undefined,
         skills: formData.skills ? formData.skills.split(',').map((s) => s.trim()).filter(Boolean) : [],
-        bio: formData.bio,
-      },
-    };
+        bio: formData.bio.trim(),
+      };
 
-    setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-
-    toast.success('Local profile updated. Note: Backend update endpoint will be added in a future phase.');
+      const res = await updateUserProfile(payload);
+      if (res.success && res.user) {
+        setUser(res.user);
+        localStorage.setItem('user', JSON.stringify(res.user));
+        toast.success('Profile saved to database successfully!');
+      } else {
+        toast.success('Profile updated!');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 w-full max-w-5xl">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <h1 className="text-2xl font-bold text-white">Your Profile</h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Manage your personal information, education, skills, and interview background
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Your Profile</h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Manage your personal credentials, education, skills, and target placement roles
           </p>
         </div>
-        <div className="flex items-center space-x-2 text-xs text-slate-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg">
-          <User className="w-4 h-4 text-brand-400" />
+        <div className="flex items-center space-x-2 text-xs font-semibold text-sky-700 bg-sky-50 border border-sky-200 px-3 py-1.5 rounded-lg shadow-xs">
+          <User className="w-4 h-4 text-sky-500" />
           <span className="capitalize">{user?.role || 'Student'} Account</span>
         </div>
       </div>
 
-      {/* Backend endpoint notice banner */}
-      <div className="p-4 bg-brand-950/40 border border-brand-500/30 rounded-xl flex items-start space-x-3 text-xs text-brand-200">
-        <Info className="w-5 h-5 text-brand-400 shrink-0 mt-0.5" />
-        <div className="space-y-1">
-          <p className="font-semibold text-slate-100">Phase 1 Profile Endpoint Note</p>
-          <p className="text-slate-300 leading-relaxed">
-            The Phase 1 backend provides <code className="bg-slate-900 px-1.5 py-0.5 rounded text-brand-300 font-mono">GET /api/auth/me</code> to authenticate and load profile data. A backend update route (<code className="bg-slate-900 px-1.5 py-0.5 rounded text-brand-300 font-mono">PUT /api/auth/profile</code>) will be integrated in a future phase.
-          </p>
-        </div>
-      </div>
-
       {/* Profile Form */}
-      <Card>
+      <Card className="border border-slate-200/90 shadow-sm">
         <form onSubmit={handleSave} className="space-y-6">
           {/* Account Basics */}
           <div>
-            <h2 className="text-sm font-bold text-slate-200 mb-4 pb-2 border-b border-slate-800">
+            <h2 className="text-sm font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100">
               Account Credentials
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -97,15 +94,15 @@ const ProfilePage = () => {
                 value={formData.email}
                 disabled
                 icon={Mail}
-                helperText="Email address cannot be changed"
+                helperText="Email address is associated with your authentication account"
               />
             </div>
           </div>
 
           {/* Education Details */}
           <div>
-            <h2 className="text-sm font-bold text-slate-200 mb-4 pb-2 border-b border-slate-800">
-              Education & Background
+            <h2 className="text-sm font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100">
+              Education & Academic Background
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="sm:col-span-1">
@@ -122,7 +119,7 @@ const ProfilePage = () => {
                 <Input
                   label="Degree / Major"
                   name="degree"
-                  placeholder="e.g. B.S. Computer Science"
+                  placeholder="e.g. B.Tech Computer Science"
                   value={formData.degree}
                   onChange={handleChange}
                   icon={GraduationCap}
@@ -144,23 +141,23 @@ const ProfilePage = () => {
 
           {/* Skills & Bio */}
           <div>
-            <h2 className="text-sm font-bold text-slate-200 mb-4 pb-2 border-b border-slate-800">
-              Skills & Bio
+            <h2 className="text-sm font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100">
+              Skills & Career Target
             </h2>
             <div className="space-y-4">
               <Input
                 label="Technical Skills (Comma Separated)"
                 name="skills"
-                placeholder="e.g. Data Structures, React, Node.js, Python, System Design"
+                placeholder="e.g. Data Structures, React, Node.js, Python, SQL, System Design"
                 value={formData.skills}
                 onChange={handleChange}
                 icon={Code2}
-                helperText="Separate skills with commas"
+                helperText="Separate skills with commas (e.g., Python, SQL, DSA)"
               />
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-medium text-slate-300">
-                  Bio / Target Roles
+              <div className="w-full space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700">
+                  Target Roles & Professional Bio
                 </label>
                 <div className="relative">
                   <textarea
@@ -168,8 +165,8 @@ const ProfilePage = () => {
                     rows="3"
                     value={formData.bio}
                     onChange={handleChange}
-                    placeholder="Brief description of your interview preparation goals..."
-                    className="block w-full rounded-lg bg-slate-950/70 border border-slate-800 text-slate-100 placeholder-slate-500 text-sm p-3 focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500"
+                    placeholder="Brief description of your interview preparation goals and target companies..."
+                    className="block w-full rounded-lg bg-white border border-slate-300 text-slate-900 placeholder-slate-400 text-sm p-3 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 hover:border-slate-400 transition"
                   />
                 </div>
               </div>
@@ -177,8 +174,18 @@ const ProfilePage = () => {
           </div>
 
           {/* Form Actions */}
-          <div className="pt-4 border-t border-slate-800 flex justify-end">
-            <Button type="submit" variant="primary" icon={Save}>
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+            <span className="text-xs text-slate-500 flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              <span>Real-time persistence to MongoDB Atlas</span>
+            </span>
+            <Button
+              type="submit"
+              variant="primary"
+              icon={Save}
+              isLoading={isSaving}
+              className="shadow-sm"
+            >
               Save Profile Changes
             </Button>
           </div>

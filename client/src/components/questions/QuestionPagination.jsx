@@ -34,18 +34,18 @@ const QuestionPagination = ({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-800 text-xs text-slate-400">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-200 text-xs text-slate-500">
       <div>
-        Showing <span className="font-semibold text-slate-200">{startItem}</span> to{' '}
-        <span className="font-semibold text-slate-200">{endItem}</span> of{' '}
-        <span className="font-semibold text-slate-200">{total}</span> questions
+        Showing <span className="font-bold text-slate-900">{startItem}</span> to{' '}
+        <span className="font-bold text-slate-900">{endItem}</span> of{' '}
+        <span className="font-bold text-slate-900">{total}</span> questions
       </div>
 
       <div className="flex items-center space-x-1.5">
         <button
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1 || loading}
-          className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
           title="Previous Page"
         >
           <ChevronLeft className="w-4 h-4" />
@@ -54,7 +54,7 @@ const QuestionPagination = ({
         {getPageNumbers().map((p, idx) => {
           if (p === '...') {
             return (
-              <span key={`dots-${idx}`} className="px-2 py-1 text-slate-500">
+              <span key={`dots-${idx}`} className="px-2 py-1 text-slate-400">
                 ...
               </span>
             );
@@ -66,10 +66,10 @@ const QuestionPagination = ({
               key={p}
               onClick={() => onPageChange(p)}
               disabled={loading}
-              className={`min-w-[32px] h-8 px-2 rounded-lg font-medium transition-all ${
+              className={`min-w-[32px] h-8 px-2 rounded-lg font-bold transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-brand-600 text-white font-bold shadow-sm shadow-brand-500/20'
-                  : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300'
+                  ? 'bg-sky-500 text-white shadow-xs'
+                  : 'bg-white border border-slate-200 hover:bg-slate-50 text-slate-700'
               }`}
             >
               {p}
@@ -80,7 +80,7 @@ const QuestionPagination = ({
         <button
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages || loading}
-          className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
           title="Next Page"
         >
           <ChevronRight className="w-4 h-4" />

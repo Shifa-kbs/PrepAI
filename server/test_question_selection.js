@@ -67,6 +67,27 @@ async function runSelectionTests() {
     let testUserDoc = null;
 
     try {
+      // Wait for Mongoose connection if currently connecting
+      if (mongoose.connection.readyState !== 1) {
+        console.log(`[Setup] Waiting for MongoDB connection (current readyState: ${mongoose.connection.readyState})...`);
+        await new Promise((resolve, reject) => {
+          if (mongoose.connection.readyState === 1) return resolve();
+          const timer = setTimeout(() => {
+            if (mongoose.connection.readyState === 1) resolve();
+            else reject(new Error(`Timed out waiting for MongoDB connection (readyState: ${mongoose.connection.readyState})`));
+          }, 8000);
+          mongoose.connection.once('connected', () => {
+            clearTimeout(timer);
+            resolve();
+          });
+          mongoose.connection.once('error', (err) => {
+            clearTimeout(timer);
+            reject(err);
+          });
+        });
+        console.log('✅ MongoDB connection ready');
+      }
+
       // 1. Register test user
       console.log('\n[Test 1] Registering test user for session tests...');
       const regRes = await makeRequest(

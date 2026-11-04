@@ -136,6 +136,9 @@ const PracticePage = () => {
           const newAnswer = {
             question: answerData.questionId,
             selectedOptionIndex: answerData.selectedAnswerIndex,
+            userAnswer: answerData.userAnswer || answerData.code || '',
+            language: answerData.language || 'javascript',
+            executionResult: res.executionResult,
             isCorrect: res.isCorrect,
             status: res.isCorrect ? 'correct' : 'wrong',
             timeSpentSeconds: answerData.timeSpentSeconds,
@@ -157,9 +160,11 @@ const PracticePage = () => {
         });
 
         if (res.isCorrect) {
-          toast.success('Correct answer! +20 points');
+          toast.success('🎉 Correct solution recorded! All test cases passed.');
+        } else if (res.isAssessment) {
+          toast.success('Answer recorded for assessment.');
         } else {
-          toast.error('Incorrect. Keep going!');
+          toast.error('Answer recorded — solution did not pass all required test cases.');
         }
       }
     } catch (err) {
@@ -249,34 +254,34 @@ const PracticePage = () => {
     <div className="space-y-6">
       {/* Top Tab Bar (Hidden during active session to minimize distraction) */}
       {tab !== 'active' && (
-        <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
+        <div className="flex items-center space-x-2 border-b border-slate-200 pb-3">
           <button
             onClick={() => setTab('setup')}
-            className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               tab === 'setup'
-                ? 'bg-brand-600 text-white shadow-sm shadow-brand-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                ? 'bg-sky-50 text-sky-700 border border-sky-200 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
-            <Layers className="w-4 h-4" />
+            <Layers className="w-4 h-4 text-sky-600" />
             <span>Practice Setup</span>
           </button>
 
           <button
             onClick={() => setTab('history')}
-            className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               tab === 'history'
-                ? 'bg-brand-600 text-white shadow-sm shadow-brand-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                ? 'bg-sky-50 text-sky-700 border border-sky-200 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
-            <History className="w-4 h-4" />
+            <History className="w-4 h-4 text-slate-500" />
             <span>Session History</span>
           </button>
 
           {summarySession && tab === 'summary' && (
-            <span className="flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-              <Sparkles className="w-3.5 h-3.5" />
+            <span className="flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-xs">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
               <span>Session Review</span>
             </span>
           )}

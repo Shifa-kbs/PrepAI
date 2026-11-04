@@ -7,24 +7,19 @@ import {
   CheckCircle2,
   XCircle,
   HelpCircle,
-  Send,
   Building2,
-  Lightbulb,
   AlertTriangle,
   LogOut,
-  Sparkles,
   LayoutGrid,
-  Check,
-  RotateCcw,
 } from 'lucide-react';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import toast from 'react-hot-toast';
 
 const difficultyStyles = {
-  Easy: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  Medium: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  Hard: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+  Easy: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  Medium: 'bg-amber-50 text-amber-700 border-amber-200',
+  Hard: 'bg-rose-50 text-rose-700 border-rose-200',
 };
 
 const AptitudeTestRoom = ({
@@ -57,7 +52,6 @@ const AptitudeTestRoom = ({
 
   const currentAnswer = currentQuestion ? answersMap.get(currentQuestion._id.toString()) : null;
   const isCurrentMarkedForReview = Boolean(currentAnswer?.markedForReview);
-  const hasSubmittedCurrent = Boolean(currentAnswer && currentAnswer.status !== 'skipped');
 
   // Sync selected option when current question changes
   useEffect(() => {
@@ -119,7 +113,6 @@ const AptitudeTestRoom = ({
   // Option selection
   const handleSelectOption = (idx) => {
     setSelectedOption(idx);
-    // In formal assessment mode, auto-save choice to keep session synced
     if (!isPracticeMode && currentQuestion) {
       const timeSpent = Math.max(1, Math.round((Date.now() - questionStartTimeRef.current) / 1000));
       onSubmitAnswer({
@@ -174,9 +167,9 @@ const AptitudeTestRoom = ({
 
   if (!currentQuestion) {
     return (
-      <div className="text-center py-16 text-slate-400">
-        <AlertTriangle className="w-10 h-10 text-amber-400 mx-auto mb-3" />
-        <p className="text-base font-semibold text-white">No questions available</p>
+      <div className="text-center py-16 text-slate-500">
+        <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto mb-3" />
+        <p className="text-base font-bold text-slate-900">No questions available</p>
         <p className="text-xs text-slate-500 mt-1">This assessment session has no question data.</p>
       </div>
     );
@@ -193,21 +186,21 @@ const AptitudeTestRoom = ({
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
       {/* Top Navigation & Status Bar */}
-      <Card className="bg-slate-900/95 border-slate-800 p-4">
+      <Card className="bg-white border-slate-200 p-4 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           {/* Section & Mode Indicator */}
           <div className="flex items-center space-x-3">
-            <span className="text-xs font-bold px-3 py-1 rounded-full bg-brand-500/10 text-brand-300 border border-brand-500/20">
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-200">
               {session.section || session.category}
             </span>
             <span
               className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
-                difficultyStyles[currentQuestion.difficulty] || 'bg-slate-800 text-slate-300'
+                difficultyStyles[currentQuestion.difficulty] || 'bg-slate-100 text-slate-700'
               }`}
             >
               {currentQuestion.difficulty}
             </span>
-            <span className="text-xs text-slate-400 font-medium">
+            <span className="text-xs text-slate-500 font-bold">
               Question {currentIndex + 1} of {questions.length}
             </span>
           </div>
@@ -218,20 +211,20 @@ const AptitudeTestRoom = ({
               <div
                 className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-xl border text-xs font-mono font-bold transition-all ${
                   isTimerCritical
-                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse'
+                    ? 'bg-rose-50 text-rose-700 border-rose-300 animate-pulse'
                     : isTimerWarning
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                    : 'bg-slate-950/80 text-slate-200 border-slate-800'
+                    ? 'bg-amber-50 text-amber-800 border-amber-300'
+                    : 'bg-slate-50 text-slate-900 border-slate-200'
                 }`}
               >
-                <Clock className="w-4 h-4 text-brand-400" />
+                <Clock className="w-4 h-4 text-sky-600" />
                 <span>{formatTimer(secondsRemaining)}</span>
               </div>
             )}
 
             <button
               onClick={() => setShowPaletteMobile(!showPaletteMobile)}
-              className="md:hidden flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700"
+              className="md:hidden flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 cursor-pointer"
             >
               <LayoutGrid className="w-3.5 h-3.5" />
               <span>Palette</span>
@@ -254,14 +247,14 @@ const AptitudeTestRoom = ({
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Left Column: Question & Options */}
         <div className="md:col-span-8 lg:col-span-9 space-y-6">
-          <Card className="bg-slate-900 border-slate-800 p-6 space-y-6">
+          <Card className="bg-white border-slate-200 p-6 space-y-6 shadow-xs">
             {/* Question Header & Review Flag */}
-            <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-800">
+            <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
               <div className="space-y-1">
-                <span className="text-xs font-bold uppercase tracking-wider text-brand-400">
+                <span className="text-xs font-bold uppercase tracking-wider text-sky-600">
                   {currentQuestion.topic || currentQuestion.category}
                 </span>
-                <h2 className="text-base sm:text-lg font-bold text-white">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900">
                   {currentQuestion.title}
                 </h2>
               </div>
@@ -269,43 +262,42 @@ const AptitudeTestRoom = ({
               <button
                 type="button"
                 onClick={handleReviewToggle}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
                   isCurrentMarkedForReview
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm shadow-amber-500/10'
-                    : 'bg-slate-950/50 text-slate-400 border-slate-800 hover:text-slate-200 hover:border-slate-700'
+                    ? 'bg-amber-50 text-amber-800 border-amber-300 shadow-xs'
+                    : 'bg-white text-slate-600 border-slate-200 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
-                <Flag className={`w-3.5 h-3.5 ${isCurrentMarkedForReview ? 'fill-amber-400 text-amber-400' : ''}`} />
+                <Flag className={`w-3.5 h-3.5 ${isCurrentMarkedForReview ? 'fill-amber-500 text-amber-500' : ''}`} />
                 <span>{isCurrentMarkedForReview ? 'Marked for Review' : 'Mark for Review'}</span>
               </button>
             </div>
 
             {/* Question Text */}
-            <div className="text-sm sm:text-base text-slate-200 leading-relaxed font-sans whitespace-pre-line bg-slate-950/40 p-4 rounded-xl border border-slate-800/60">
+            <div className="text-sm sm:text-base text-slate-800 leading-relaxed font-sans whitespace-pre-line bg-slate-50 p-4 rounded-xl border border-slate-200">
               {currentQuestion.description}
             </div>
 
             {/* MCQ Options Cards */}
             <div className="space-y-3 pt-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Choose the correct answer:
               </p>
               <div className="space-y-2.5">
                 {(currentQuestion.options || []).map((optionText, idx) => {
                   const isSelected = selectedOption === idx;
-                  const optionLabel = String.fromCharCode(65 + idx); // 'A', 'B', 'C', 'D'
+                  const optionLabel = String.fromCharCode(65 + idx);
 
-                  // In practice mode after submission, highlight correct/wrong
-                  let optionStateClasses = 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-300';
+                  let optionStateClasses = 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-800';
                   if (isSelected) {
-                    optionStateClasses = 'bg-brand-600/20 border-brand-500 text-white shadow-sm shadow-brand-500/10';
+                    optionStateClasses = 'bg-sky-50 border-sky-400 text-sky-950 font-bold ring-1 ring-sky-400 shadow-xs';
                   }
 
                   if (isPracticeMode && immediateResult) {
                     if (idx === immediateResult.correctAnswerIndex) {
-                      optionStateClasses = 'bg-emerald-500/20 border-emerald-500 text-emerald-200 font-semibold';
+                      optionStateClasses = 'bg-emerald-50 border-emerald-400 text-emerald-950 font-bold';
                     } else if (isSelected && !immediateResult.isCorrect) {
-                      optionStateClasses = 'bg-rose-500/20 border-rose-500 text-rose-200';
+                      optionStateClasses = 'bg-rose-50 border-rose-400 text-rose-950';
                     }
                   }
 
@@ -319,8 +311,8 @@ const AptitudeTestRoom = ({
                       <span
                         className={`w-7 h-7 rounded-lg font-bold flex items-center justify-center shrink-0 text-xs border ${
                           isSelected
-                            ? 'bg-brand-500 text-white border-brand-400'
-                            : 'bg-slate-900 text-slate-400 border-slate-700'
+                            ? 'bg-sky-600 text-white border-sky-600'
+                            : 'bg-slate-100 text-slate-700 border-slate-200'
                         }`}
                       >
                         {optionLabel}
@@ -335,29 +327,29 @@ const AptitudeTestRoom = ({
             {/* Immediate Explanation Banner in Practice Mode */}
             {isPracticeMode && immediateResult && (
               <div
-                className={`p-4 rounded-xl border space-y-2 animate-fade-in ${
+                className={`p-4 rounded-xl border space-y-2 animate-in fade-in duration-200 ${
                   immediateResult.isCorrect
-                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                    : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                    : 'bg-rose-50 border-rose-200 text-rose-900'
                 }`}
               >
                 <div className="flex items-center space-x-2 font-bold text-sm">
                   {immediateResult.isCorrect ? (
                     <>
-                      <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                       <span>Correct Answer! (+20 Points)</span>
                     </>
                   ) : (
                     <>
-                      <XCircle className="w-5 h-5 text-rose-400" />
+                      <XCircle className="w-5 h-5 text-rose-600" />
                       <span>Incorrect Choice</span>
                     </>
                   )}
                 </div>
 
                 {immediateResult.explanation && (
-                  <div className="text-xs text-slate-300 leading-relaxed pt-2 border-t border-slate-800 whitespace-pre-line">
-                    <strong className="text-white block mb-1">Step-by-Step Explanation:</strong>
+                  <div className="text-xs text-slate-800 leading-relaxed pt-2 border-t border-slate-200 whitespace-pre-line">
+                    <strong className="text-slate-900 block mb-1">Step-by-Step Explanation:</strong>
                     {immediateResult.explanation}
                   </div>
                 )}
@@ -365,7 +357,7 @@ const AptitudeTestRoom = ({
             )}
 
             {/* Navigation & Action Controls */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-6 border-t border-slate-800">
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-6 border-t border-slate-100">
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
@@ -373,7 +365,7 @@ const AptitudeTestRoom = ({
                   icon={ChevronLeft}
                   disabled={currentIndex === 0}
                   onClick={handlePrev}
-                  className="text-xs font-semibold"
+                  className="text-xs font-bold"
                 >
                   Previous
                 </Button>
@@ -382,7 +374,7 @@ const AptitudeTestRoom = ({
                   size="sm"
                   disabled={currentIndex === questions.length - 1}
                   onClick={handleNext}
-                  className="text-xs font-semibold"
+                  className="text-xs font-bold"
                 >
                   <span>Next</span>
                   <ChevronRight className="w-4 h-4" />
@@ -395,7 +387,7 @@ const AptitudeTestRoom = ({
                     variant="ghost"
                     size="sm"
                     onClick={handleClearSelection}
-                    className="text-xs text-slate-400 hover:text-slate-200"
+                    className="text-xs text-slate-500 hover:text-slate-800"
                   >
                     Clear Choice
                   </Button>
@@ -405,13 +397,12 @@ const AptitudeTestRoom = ({
                   <Button
                     variant="primary"
                     size="sm"
-                    icon={Send}
+                    onClick={handlePracticeSubmit}
                     isLoading={isSubmitting}
                     disabled={selectedOption === null}
-                    onClick={handlePracticeSubmit}
                     className="text-xs font-bold"
                   >
-                    Verify Answer
+                    Check Answer
                   </Button>
                 )}
               </div>
@@ -419,71 +410,64 @@ const AptitudeTestRoom = ({
           </Card>
         </div>
 
-        {/* Right Column: Question Palette (Sticky on desktop) */}
+        {/* Right Column: Question Palette */}
         <div
-          className={`md:col-span-4 lg:col-span-3 ${
+          className={`md:col-span-4 lg:col-span-3 space-y-4 ${
             showPaletteMobile ? 'block' : 'hidden md:block'
           }`}
         >
-          <Card className="bg-slate-900 border-slate-800 p-4 space-y-4 md:sticky md:top-6">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                <LayoutGrid className="w-3.5 h-3.5 text-brand-400" />
-                <span>Question Palette</span>
-              </h3>
-              <span className="text-[11px] font-semibold text-slate-400">
-                {answeredCount}/{questions.length} Answered
-              </span>
-            </div>
+          <Card className="bg-white border-slate-200 p-4 space-y-4 shadow-xs sticky top-20">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-2">
+              Question Palette
+            </h3>
 
-            {/* Palette Status Legend */}
-            <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-400 pb-2 border-b border-slate-800/80">
+            {/* Status Legend */}
+            <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600">
               <div className="flex items-center space-x-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                <span className="w-3 h-3 rounded bg-emerald-500" />
                 <span>Answered ({answeredCount})</span>
               </div>
               <div className="flex items-center space-x-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                <span className="w-3 h-3 rounded bg-amber-500" />
                 <span>Review ({reviewCount})</span>
               </div>
               <div className="flex items-center space-x-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-700" />
-                <span>Unanswered ({unansweredCount})</span>
+                <span className="w-3 h-3 rounded bg-slate-200" />
+                <span>Unattempted ({unansweredCount})</span>
               </div>
               <div className="flex items-center space-x-1.5">
-                <span className="w-2.5 h-2.5 rounded-full border-2 border-brand-400" />
+                <span className="w-3 h-3 rounded ring-2 ring-sky-500 bg-white" />
                 <span>Current</span>
               </div>
             </div>
 
-            {/* Palette Number Grid */}
-            <div className="grid grid-cols-5 gap-2 max-h-[300px] overflow-y-auto pr-1">
+            {/* Questions Grid */}
+            <div className="grid grid-cols-5 gap-1.5 pt-2 max-h-72 overflow-y-auto">
               {questions.map((q, idx) => {
                 const ans = answersMap.get(q._id.toString());
-                const isAnswered = Boolean(ans && ans.status !== 'skipped');
-                const isReview = Boolean(ans && ans.markedForReview);
-                const isCurrent = currentIndex === idx;
+                const isAnswered = ans && ans.status !== 'skipped';
+                const isMarked = Boolean(ans?.markedForReview);
+                const isCurrent = idx === currentIndex;
 
-                let paletteColor = 'bg-slate-800 text-slate-400 border-slate-700';
+                let pillColor = 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200';
                 if (isAnswered) {
-                  paletteColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 font-bold';
+                  pillColor = 'bg-emerald-500 text-white font-bold border-emerald-500';
                 }
-                if (isReview) {
-                  paletteColor = 'bg-amber-500/20 text-amber-300 border-amber-500/50 font-bold';
+                if (isMarked) {
+                  pillColor = 'bg-amber-500 text-white font-bold border-amber-500';
                 }
                 if (isCurrent) {
-                  paletteColor += ' ring-2 ring-brand-400 ring-offset-2 ring-offset-slate-900';
+                  pillColor += ' ring-2 ring-sky-500 ring-offset-1 font-black';
                 }
 
                 return (
                   <button
                     key={q._id}
-                    type="button"
                     onClick={() => {
                       setCurrentIndex(idx);
                       setShowPaletteMobile(false);
                     }}
-                    className={`h-9 rounded-lg border text-xs flex items-center justify-center transition-all cursor-pointer ${paletteColor}`}
+                    className={`h-8 rounded-lg text-xs font-medium border flex items-center justify-center transition-all cursor-pointer ${pillColor}`}
                   >
                     {idx + 1}
                   </button>
@@ -491,82 +475,54 @@ const AptitudeTestRoom = ({
               })}
             </div>
 
-            {/* Test Completion Button */}
-            <div className="pt-2">
-              <Button
-                variant="danger"
-                size="md"
-                onClick={() => setShowConfirmFinish(true)}
-                isLoading={isFinishing}
-                className="w-full text-xs font-bold"
-              >
-                Finish & Submit Assessment
-              </Button>
-            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowConfirmFinish(true)}
+              className="w-full text-xs font-bold mt-2"
+            >
+              Finish & View Results
+            </Button>
           </Card>
         </div>
       </div>
 
-      {/* Confirmation Modal Before Submission */}
+      {/* Confirmation Modal */}
       {showConfirmFinish && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 space-y-5">
-            <div className="flex items-center space-x-3 text-amber-400">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-base font-bold text-white">Submit Assessment?</h4>
-                <p className="text-xs text-slate-400">Review your test progress before submitting.</p>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <Card className="max-w-md w-full bg-white border-slate-200 p-6 space-y-4 shadow-xl">
+            <div className="flex items-center space-x-3 text-amber-600">
+              <AlertTriangle className="w-6 h-6 shrink-0" />
+              <h3 className="text-base font-bold text-slate-900">Submit Assessment?</h3>
             </div>
-
-            {/* Summary Counts */}
-            <div className="grid grid-cols-3 gap-2.5 p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 text-center text-xs">
-              <div>
-                <p className="text-slate-400 font-medium">Answered</p>
-                <p className="text-lg font-black text-emerald-400 mt-0.5">{answeredCount}</p>
-              </div>
-              <div>
-                <p className="text-slate-400 font-medium">For Review</p>
-                <p className="text-lg font-black text-amber-400 mt-0.5">{reviewCount}</p>
-              </div>
-              <div>
-                <p className="text-slate-400 font-medium">Unanswered</p>
-                <p className="text-lg font-black text-rose-400 mt-0.5">{unansweredCount}</p>
-              </div>
-            </div>
-
-            {unansweredCount > 0 && (
-              <p className="text-xs text-amber-300 bg-amber-500/10 p-2.5 rounded-lg border border-amber-500/20">
-                You have {unansweredCount} unanswered question{unansweredCount > 1 ? 's' : ''}. Unanswered
-                questions will receive 0 marks.
-              </p>
-            )}
-
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              You have answered <strong className="text-slate-900">{answeredCount}</strong> of{' '}
+              <strong className="text-slate-900">{questions.length}</strong> questions. Are you sure you
+              want to submit and conclude this session?
+            </p>
+            <div className="flex items-center justify-end space-x-3 pt-2">
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => setShowConfirmFinish(false)}
                 className="text-xs"
               >
-                Return to Test
+                Continue Assessment
               </Button>
               <Button
-                variant="danger"
-                size="md"
+                variant="primary"
+                size="sm"
                 isLoading={isFinishing}
-                onClick={async () => {
+                onClick={() => {
                   setShowConfirmFinish(false);
-                  await onFinishSession();
+                  onFinishSession();
                 }}
-                className="text-xs font-bold px-5"
+                className="text-xs font-bold"
               >
-                Yes, Submit Assessment
+                Yes, Submit Now
               </Button>
             </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>

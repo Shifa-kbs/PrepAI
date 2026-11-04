@@ -9,11 +9,8 @@ import {
   RotateCcw,
   Sparkles,
   CheckCircle2,
-  AlertCircle,
-  HelpCircle,
   BarChart2,
   Flame,
-  ChevronRight,
   X,
   Target,
   Sliders,
@@ -25,22 +22,22 @@ import Button from '../common/Button';
 const sectionMeta = {
   'Quantitative Aptitude': {
     icon: Calculator,
-    color: 'from-amber-500/20 to-orange-500/10 border-amber-500/30 text-amber-400',
-    badge: 'bg-amber-500/10 text-amber-300 border-amber-500/20',
+    color: 'bg-amber-50 border-amber-200 text-amber-700',
+    badge: 'bg-amber-50 text-amber-800 border-amber-200',
     description: 'Master arithmetic, percentages, ratios, speed, time & work, interest, and combinatorics.',
     defaultTimeMinutes: 20,
   },
   'Logical Reasoning': {
     icon: GitBranch,
-    color: 'from-indigo-500/20 to-cyan-500/10 border-indigo-500/30 text-indigo-400',
-    badge: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20',
+    color: 'bg-indigo-50 border-indigo-200 text-indigo-700',
+    badge: 'bg-indigo-50 text-indigo-800 border-indigo-200',
     description: 'Solve syllogisms, seating arrangements, blood relations, patterns, clocks, and critical logic.',
     defaultTimeMinutes: 20,
   },
   'Verbal Ability': {
     icon: BookOpen,
-    color: 'from-emerald-500/20 to-teal-500/10 border-emerald-500/30 text-emerald-400',
-    badge: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
+    color: 'bg-emerald-50 border-emerald-200 text-emerald-700',
+    badge: 'bg-emerald-50 text-emerald-800 border-emerald-200',
     description: 'Strengthen reading comprehension, sentence correction, grammar rules, and vocabulary in context.',
     defaultTimeMinutes: 15,
   },
@@ -109,29 +106,29 @@ const AptitudeWorkspace = ({
   const currentSectionData = !isFullAptitude && selectedSection ? sections[selectedSection] : null;
   const availableTopics = currentSectionData ? Object.keys(currentSectionData.topics || {}) : [];
   const maxAvailable = isFullAptitude
-    ? stats?.totalAptitudeQuestions || 46
-    : currentSectionData?.total || 15;
+    ? stats?.totalAptitudeQuestions || 151
+    : currentSectionData?.total || 50;
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-12">
       {/* Active Session Alert Banner */}
       {activeSession && (
-        <Card className="bg-gradient-to-r from-brand-950 via-slate-900 to-slate-900 border-brand-500/40 p-4 sm:p-5">
+        <Card className="bg-amber-50 border-amber-200 p-4 sm:p-5 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start sm:items-center space-x-3.5">
-              <div className="w-10 h-10 rounded-xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-brand-400 shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700 shrink-0">
                 <Flame className="w-5 h-5 animate-pulse" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-brand-400">
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-800">
                     Active Assessment in Progress
                   </span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white text-amber-800 border border-amber-300">
                     {activeSession.mode === 'topic' ? 'Practice Mode' : 'Timed Test'}
                   </span>
                 </div>
-                <h4 className="text-sm sm:text-base font-bold text-white mt-0.5">
+                <h4 className="text-sm sm:text-base font-bold text-slate-900 mt-0.5">
                   {activeSession.category} • {activeSession.totalQuestions} Questions (
                   {(activeSession.answers || []).length} Answered)
                 </h4>
@@ -144,7 +141,7 @@ const AptitudeWorkspace = ({
                 size="sm"
                 icon={Play}
                 onClick={onResumeSession}
-                className="text-xs font-semibold"
+                className="text-xs font-bold"
               >
                 Resume Assessment
               </Button>
@@ -153,7 +150,7 @@ const AptitudeWorkspace = ({
                 size="sm"
                 icon={RotateCcw}
                 onClick={onDiscardActive}
-                className="text-xs text-slate-400 hover:text-rose-400 hover:border-rose-500/30"
+                className="text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-slate-200"
               >
                 Discard
               </Button>
@@ -163,33 +160,33 @@ const AptitudeWorkspace = ({
       )}
 
       {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-brand-950/40 to-slate-900 border border-slate-800 p-6 sm:p-8">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-sky-50 via-white to-sky-50 border border-sky-200 p-6 sm:p-8 shadow-xs">
         <div className="max-w-3xl space-y-3">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-300 text-xs font-semibold">
-            <Target className="w-3.5 h-3.5" />
-            <span>Dedicated Placement Aptitude Module</span>
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-sky-100 border border-sky-200 text-sky-800 text-xs font-bold">
+            <Target className="w-3.5 h-3.5 text-sky-600" />
+            <span>Placement Aptitude Module</span>
           </div>
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             Master Campus Placement Aptitude
           </h1>
-          <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+          <p className="text-sm text-slate-600 leading-relaxed">
             Practice section-by-section or challenge yourself with realistic full-length timed
             assessments. Every question features verified solutions and step-by-step mathematical &
             logical deductions.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-slate-400">
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>{stats?.totalAptitudeQuestions || 46} Curated Questions</span>
+          <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-slate-600">
+            <span className="flex items-center gap-1.5 font-medium">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>{stats?.totalAptitudeQuestions || 151} Curated Questions</span>
             </span>
-            <span className="flex items-center gap-1.5">
-              <Clock className="w-4 h-4 text-brand-400" />
+            <span className="flex items-center gap-1.5 font-medium">
+              <Clock className="w-4 h-4 text-sky-600" />
               <span>Real Countdown Timer & Auto-Submit</span>
             </span>
-            <span className="flex items-center gap-1.5">
-              <BarChart2 className="w-4 h-4 text-indigo-400" />
-              <span>Topic-Wise Weak Area Diagnostics</span>
+            <span className="flex items-center gap-1.5 font-medium">
+              <BarChart2 className="w-4 h-4 text-indigo-600" />
+              <span>Topic-Wise Diagnostics</span>
             </span>
           </div>
         </div>
@@ -199,8 +196,8 @@ const AptitudeWorkspace = ({
       <div>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg font-bold text-white">Section Workspaces</h2>
-            <p className="text-xs text-slate-400">
+            <h2 className="text-lg font-bold text-slate-900">Section Workspaces</h2>
+            <p className="text-xs text-slate-500">
               Select a core aptitude domain to practice specific topics or attempt a timed section test.
             </p>
           </div>
@@ -223,18 +220,18 @@ const AptitudeWorkspace = ({
             return (
               <Card
                 key={sectionName}
-                className="flex flex-col justify-between bg-slate-900/90 border-slate-800/80 hover:border-slate-700 transition-all p-5 sm:p-6"
+                className="flex flex-col justify-between bg-white border-slate-200 hover:border-sky-300 hover:shadow-md transition-all p-5 sm:p-6 shadow-xs"
               >
                 <div className="space-y-4">
                   {/* Top Bar */}
                   <div className="flex items-center justify-between">
                     <div
-                      className={`w-11 h-11 rounded-xl bg-gradient-to-br ${meta.color} border flex items-center justify-center shrink-0`}
+                      className={`w-11 h-11 rounded-xl ${meta.color} border flex items-center justify-center shrink-0`}
                     >
                       <Icon className="w-5 h-5" />
                     </div>
                     <span
-                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${meta.badge}`}
+                      className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${meta.badge}`}
                     >
                       {data.total} Questions
                     </span>
@@ -242,23 +239,23 @@ const AptitudeWorkspace = ({
 
                   {/* Title & Description */}
                   <div>
-                    <h3 className="text-base font-bold text-white">{sectionName}</h3>
-                    <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                    <h3 className="text-base font-bold text-slate-900">{sectionName}</h3>
+                    <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
                       {meta.description}
                     </p>
                   </div>
 
                   {/* Progress Tracker */}
-                  <div className="space-y-1.5 bg-slate-950/60 p-3 rounded-lg border border-slate-800/60">
+                  <div className="space-y-1.5 bg-slate-50 p-3 rounded-lg border border-slate-200">
                     <div className="flex justify-between text-xs">
-                      <span className="text-slate-400">Domain Mastery</span>
-                      <span className="font-semibold text-slate-200">
+                      <span className="text-slate-500 font-medium">Domain Mastery</span>
+                      <span className="font-bold text-slate-800">
                         {data.solved} / {data.total} Solved ({solvedPercent}%)
                       </span>
                     </div>
-                    <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-brand-500 to-emerald-400 transition-all duration-500 rounded-full"
+                        className="h-full bg-sky-500 transition-all duration-500 rounded-full"
                         style={{ width: `${solvedPercent}%` }}
                       />
                     </div>
@@ -266,20 +263,20 @@ const AptitudeWorkspace = ({
 
                   {/* Topics Preview Chips */}
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
                       Included Topics
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {topicsList.slice(0, 4).map((t) => (
                         <span
                           key={t}
-                          className="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700/50"
+                          className="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 font-medium"
                         >
                           {t}
                         </span>
                       ))}
                       {topicsList.length > 4 && (
-                        <span className="text-[11px] px-1.5 py-0.5 rounded bg-slate-800/60 text-slate-400">
+                        <span className="text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-medium">
                           +{topicsList.length - 4} more
                         </span>
                       )}
@@ -288,12 +285,12 @@ const AptitudeWorkspace = ({
                 </div>
 
                 {/* Actions */}
-                <div className="grid grid-cols-2 gap-2 pt-5 mt-5 border-t border-slate-800">
+                <div className="grid grid-cols-2 gap-2 pt-5 mt-5 border-t border-slate-100">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleOpenConfig(sectionName, 'topic')}
-                    className="text-xs font-semibold"
+                    className="text-xs font-bold"
                   >
                     Topic Practice
                   </Button>
@@ -302,7 +299,7 @@ const AptitudeWorkspace = ({
                     size="sm"
                     icon={Clock}
                     onClick={() => handleOpenConfig(sectionName, 'section-test')}
-                    className="text-xs font-semibold"
+                    className="text-xs font-bold"
                   >
                     Timed Test
                   </Button>
@@ -314,17 +311,17 @@ const AptitudeWorkspace = ({
       </div>
 
       {/* Full-Length Timed Assessment Banner */}
-      <Card className="relative overflow-hidden bg-gradient-to-r from-brand-950 via-slate-900 to-indigo-950/60 border-brand-500/30 p-6 sm:p-7">
+      <Card className="relative overflow-hidden bg-white border-slate-200 p-6 sm:p-7 shadow-xs">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-center md:text-left">
-            <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 text-xs font-bold">
-              <Trophy className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold">
+              <Trophy className="w-3.5 h-3.5 text-amber-600" />
               <span>Full-Length Placement Mock</span>
             </div>
-            <h3 className="text-xl sm:text-2xl font-black text-white">
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900">
               Complete Placement Aptitude Assessment
             </h3>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
               Experience the actual hiring test format used by top IT companies (TCS NQT, Infosys,
               Cognizant, Accenture, and Amazon). Balanced selection across Quantitative, Logical, and
               Verbal Ability with strict countdown timing.
@@ -337,7 +334,7 @@ const AptitudeWorkspace = ({
               size="lg"
               icon={Play}
               onClick={() => handleOpenConfig('Full Aptitude Test', 'section-test')}
-              className="text-sm font-bold shadow-lg shadow-brand-600/30 px-6 py-3"
+              className="text-sm font-bold px-6 py-3 shadow-sm"
             >
               Start Full Assessment
             </Button>
@@ -347,19 +344,19 @@ const AptitudeWorkspace = ({
 
       {/* Configuration Modal */}
       {selectedSection && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <div className="relative w-full max-w-lg bg-white border border-slate-200 rounded-2xl shadow-xl p-6 space-y-6">
             {/* Modal Header */}
-            <div className="flex items-start justify-between pb-4 border-b border-slate-800">
+            <div className="flex items-start justify-between pb-4 border-b border-slate-100">
               <div>
-                <span className="text-[11px] uppercase font-bold tracking-wider text-brand-400">
+                <span className="text-[11px] uppercase font-bold tracking-wider text-sky-600">
                   Assessment Setup
                 </span>
-                <h3 className="text-lg font-extrabold text-white mt-0.5">{selectedSection}</h3>
+                <h3 className="text-lg font-extrabold text-slate-900 mt-0.5">{selectedSection}</h3>
               </div>
               <button
                 onClick={handleCloseModal}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -367,8 +364,8 @@ const AptitudeWorkspace = ({
 
             {/* Assessment Mode Switcher */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <Sliders className="w-3.5 h-3.5 text-brand-400" />
+              <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <Sliders className="w-3.5 h-3.5 text-sky-600" />
                 <span>Mode of Operation</span>
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -378,17 +375,17 @@ const AptitudeWorkspace = ({
                     setModalMode('section-test');
                     setTimeLimitMinutes(isFullAptitude ? 30 : 20);
                   }}
-                  className={`p-3 rounded-xl border text-left transition-all ${
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                     modalMode === 'section-test'
-                      ? 'bg-brand-600/20 border-brand-500/50 text-white'
-                      : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700'
+                      ? 'bg-sky-50 border-sky-400 text-sky-950 font-bold ring-1 ring-sky-400'
+                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
                   }`}
                 >
-                  <p className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-brand-400" />
+                  <p className="text-xs font-bold flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-sky-600" />
                     <span>Timed Assessment</span>
                   </p>
-                  <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                  <p className="text-[11px] text-slate-500 mt-1 leading-snug">
                     Formal test. Countdown timer. Answers hidden until submission.
                   </p>
                 </button>
@@ -399,17 +396,17 @@ const AptitudeWorkspace = ({
                     setModalMode('topic');
                     setTimeLimitMinutes(0);
                   }}
-                  className={`p-3 rounded-xl border text-left transition-all ${
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                     modalMode === 'topic'
-                      ? 'bg-brand-600/20 border-brand-500/50 text-white'
-                      : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700'
+                      ? 'bg-sky-50 border-sky-400 text-sky-950 font-bold ring-1 ring-sky-400'
+                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
                   }`}
                 >
-                  <p className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                  <p className="text-xs font-bold flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Topic Practice</span>
                   </p>
-                  <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                  <p className="text-[11px] text-slate-500 mt-1 leading-snug">
                     Untimed study mode. Instant feedback with full step-by-step explanations.
                   </p>
                 </button>
@@ -419,11 +416,11 @@ const AptitudeWorkspace = ({
             {/* Topic Filter (Only for single section) */}
             {!isFullAptitude && availableTopics.length > 0 && (
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-300">Target Topic</label>
+                <label className="text-xs font-bold text-slate-700">Target Topic</label>
                 <select
                   value={selectedTopic}
                   onChange={(e) => setSelectedTopic(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer"
                 >
                   <option value="All">All Topics ({currentSectionData?.total || 0} questions)</option>
                   {availableTopics.map((top) => (
@@ -437,17 +434,17 @@ const AptitudeWorkspace = ({
 
             {/* Difficulty Filter */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Difficulty</label>
+              <label className="text-xs font-bold text-slate-700">Difficulty</label>
               <div className="grid grid-cols-4 gap-2">
                 {['All', 'Easy', 'Medium', 'Hard'].map((diff) => (
                   <button
                     key={diff}
                     type="button"
                     onClick={() => setSelectedDifficulty(diff)}
-                    className={`py-1.5 rounded-lg text-xs font-medium border text-center transition-all ${
+                    className={`py-1.5 rounded-lg text-xs font-semibold border text-center transition-all cursor-pointer ${
                       selectedDifficulty === diff
-                        ? 'bg-brand-600 text-white border-brand-500 shadow-sm'
-                        : 'bg-slate-950/50 text-slate-400 border-slate-800 hover:text-white hover:border-slate-700'
+                        ? 'bg-sky-500 text-white border-sky-500 shadow-xs'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                     }`}
                   >
                     {diff === 'All' ? 'Mixed' : diff}
@@ -459,11 +456,13 @@ const AptitudeWorkspace = ({
             {/* Question Count Selection */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center text-xs">
-                <label className="font-semibold text-slate-300">Question Count</label>
-                <span className="text-slate-400">Available: {maxAvailable}</span>
+                <label className="font-bold text-slate-700">Question Count</label>
+                <span className="text-sky-700 font-bold bg-sky-50 px-2 py-0.5 rounded border border-sky-100">
+                  {maxAvailable} Available
+                </span>
               </div>
               <div className="grid grid-cols-4 gap-2">
-                {[5, 10, 15, maxAvailable].map((cnt) => {
+                {[5, 10, 15, Math.min(30, maxAvailable)].map((cnt) => {
                   const isAvailable = maxAvailable >= cnt;
                   return (
                     <button
@@ -471,15 +470,15 @@ const AptitudeWorkspace = ({
                       type="button"
                       disabled={!isAvailable}
                       onClick={() => setQuestionCount(cnt)}
-                      className={`py-2 rounded-lg text-xs font-bold border text-center transition-all ${
+                      className={`py-2 rounded-lg text-xs font-bold border text-center transition-all cursor-pointer ${
                         questionCount === cnt
-                          ? 'bg-brand-600 text-white border-brand-500'
+                          ? 'bg-sky-500 text-white border-sky-500'
                           : isAvailable
-                          ? 'bg-slate-950/50 text-slate-300 border-slate-800 hover:border-slate-700'
-                          : 'bg-slate-950/20 text-slate-600 border-slate-800/40 cursor-not-allowed opacity-40'
+                          ? 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                          : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-50'
                       }`}
                     >
-                      {cnt === maxAvailable && cnt > 15 ? `Max (${cnt})` : `${cnt} Qs`}
+                      {`${cnt} Qs`}
                     </button>
                   );
                 })}
@@ -490,8 +489,8 @@ const AptitudeWorkspace = ({
             {modalMode === 'section-test' && (
               <div className="space-y-1.5">
                 <div className="flex justify-between items-center text-xs">
-                  <label className="font-semibold text-slate-300">Time Limit</label>
-                  <span className="text-amber-400 font-semibold">{timeLimitMinutes} Minutes</span>
+                  <label className="font-bold text-slate-700">Time Limit</label>
+                  <span className="text-amber-700 font-bold">{timeLimitMinutes} Minutes</span>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                   {[15, 20, 30, 45].map((mins) => (
@@ -499,10 +498,10 @@ const AptitudeWorkspace = ({
                       key={mins}
                       type="button"
                       onClick={() => setTimeLimitMinutes(mins)}
-                      className={`py-1.5 rounded-lg text-xs font-medium border text-center transition-all ${
+                      className={`py-1.5 rounded-lg text-xs font-semibold border text-center transition-all cursor-pointer ${
                         timeLimitMinutes === mins
-                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
-                          : 'bg-slate-950/50 text-slate-400 border-slate-800 hover:text-white'
+                          ? 'bg-amber-50 text-amber-800 border-amber-300 font-bold'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                       }`}
                     >
                       {mins} mins
@@ -513,12 +512,12 @@ const AptitudeWorkspace = ({
             )}
 
             {/* Test Rules Banner */}
-            <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 text-[11px] text-slate-400 space-y-1">
-              <p className="font-semibold text-slate-300 flex items-center gap-1">
-                <ShieldAlert className="w-3.5 h-3.5 text-brand-400" />
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-1">
+              <p className="font-bold text-slate-900 flex items-center gap-1">
+                <ShieldAlert className="w-3.5 h-3.5 text-sky-600" />
                 <span>Assessment Instructions</span>
               </p>
-              <ul className="list-disc list-inside space-y-0.5 text-slate-400">
+              <ul className="list-disc list-inside space-y-0.5 text-slate-600">
                 <li>Score: +20 points per correct answer (No negative marking).</li>
                 <li>Mark questions for review to easily jump back via the Question Palette.</li>
                 {modalMode === 'section-test' && (
@@ -528,7 +527,7 @@ const AptitudeWorkspace = ({
             </div>
 
             {/* Modal Actions */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
               <Button variant="ghost" size="sm" onClick={handleCloseModal} className="text-xs">
                 Cancel
               </Button>

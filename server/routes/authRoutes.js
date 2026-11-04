@@ -4,6 +4,7 @@ const {
   registerUser,
   loginUser,
   getMe,
+  updateProfile,
   forgotPassword,
   resetPassword,
 } = require('../controllers/authController');
@@ -34,6 +35,9 @@ router.post(
 
 // Get current user profile
 router.get('/me', protect, getMe);
+
+// Update user profile
+router.put('/profile', protect, updateProfile);
 
 // Forgot & Reset Password
 router.post('/forgot-password', forgotPassword);

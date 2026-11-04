@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const PracticeSession = require('../models/PracticeSession');
 const QuestionProgress = require('../models/QuestionProgress');
 const MockInterview = require('../models/MockInterview');
+const CognitiveSession = require('../models/CognitiveSession');
 const Question = require('../models/Question');
 const User = require('../models/User');
 
@@ -88,7 +89,30 @@ const getUserAnalytics = async (req, res, next) => {
       ? Math.max(...completedInterviews.map((m) => m.overallScore || 0))
       : 0;
 
-    // 4. Topic-wise Performance, Strengths & Areas to Improve
+    // 4. Cognitive Assessment Metrics
+    const cognitiveSessions = await CognitiveSession.find({ user: userId })
+      .sort({ completedAt: -1, createdAt: -1 })
+      .lean();
+
+    const totalCognitiveSessions = cognitiveSessions.length;
+    const avgCognitiveScore = totalCognitiveSessions > 0
+      ? Math.round(
+          cognitiveSessions.reduce(
+            (acc, c) => acc + (c.compositeScore || c.overallScore || 0),
+            0
+          ) / totalCognitiveSessions
+        )
+      : 0;
+
+    const bestCognitiveScore = totalCognitiveSessions > 0
+      ? Math.max(...cognitiveSessions.map((c) => c.compositeScore || c.overallScore || 0))
+      : 0;
+
+    const bestDigitSpan = totalCognitiveSessions > 0
+      ? Math.max(...cognitiveSessions.map((c) => c.maxDigitSpan || 0))
+      : 0;
+
+    // 5. Topic-wise Performance, Strengths & Areas to Improve
     const categoryStatsMap = {};
 
     progressRecords.forEach((p) => {
@@ -171,6 +195,25 @@ const getUserAnalytics = async (req, res, next) => {
       });
     });
 
+    cognitiveSessions.slice(0, 10).forEach((c) => {
+      recentActivity.push({
+        id: c._id,
+        type: 'cognitive',
+        title: `Cognitive: ${
+          c.activityType === 'digit-span'
+            ? 'Digit Span'
+            : c.activityType === 'pattern-recognition'
+            ? 'Pattern Recognition'
+            : c.activityType === 'numerical-estimation'
+            ? 'Numerical Estimation'
+            : 'Cognitive Battery'
+        }`,
+        date: c.completedAt || c.createdAt,
+        status: 'completed',
+        score: c.compositeScore || c.overallScore || 0,
+      });
+    });
+
     recentActivity.sort((a, b) => new Date(b.date) - new Date(a.date));
 
     const responseData = {
@@ -191,6 +234,12 @@ const getUserAnalytics = async (req, res, next) => {
         completedInterviews: completedInterviews.length,
         averageScore: avgMockScore,
         bestScore: bestMockScore,
+      },
+      cognitiveMetrics: {
+        totalSessions: totalCognitiveSessions,
+        averageScore: avgCognitiveScore,
+        bestScore: bestCognitiveScore,
+        bestDigitSpan,
       },
       scoreTrends,
       topicPerformance: {

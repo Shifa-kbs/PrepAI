@@ -69,6 +69,27 @@ async function runPhase6Verification() {
     let userADoc, userBDoc, adminDoc;
 
     try {
+      // Wait for Mongoose connection if currently connecting
+      if (mongoose.connection.readyState !== 1) {
+        console.log(`[Setup] Waiting for MongoDB connection (current readyState: ${mongoose.connection.readyState})...`);
+        await new Promise((resolve, reject) => {
+          if (mongoose.connection.readyState === 1) return resolve();
+          const timer = setTimeout(() => {
+            if (mongoose.connection.readyState === 1) resolve();
+            else reject(new Error(`Timed out waiting for MongoDB connection (readyState: ${mongoose.connection.readyState})`));
+          }, 18000);
+          mongoose.connection.once('connected', () => {
+            clearTimeout(timer);
+            resolve();
+          });
+          mongoose.connection.once('error', (err) => {
+            clearTimeout(timer);
+            reject(err);
+          });
+        });
+        console.log('✅ MongoDB connection ready');
+      }
+
       // 1. Setup: Register Alice (User A), Bob (User B), and Admin
       console.log('\n[Step 1] Registering test users (Alice, Bob, Admin)...');
       const regA = await makeRequest(

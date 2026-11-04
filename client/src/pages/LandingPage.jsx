@@ -53,16 +53,16 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-brand-500 selection:text-white">
+    <div className="min-h-screen bg-white text-slate-900 flex flex-col selection:bg-sky-500 selection:text-white">
       {/* Navigation Header */}
-      <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 px-6 py-4">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center text-white shadow-lg shadow-brand-600/30">
+            <div className="w-9 h-9 rounded-xl bg-sky-500 flex items-center justify-center text-white shadow-md shadow-sky-500/20">
               <Sparkles className="w-5 h-5" />
             </div>
-            <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-              Prep<span className="text-brand-500">AI</span>
+            <span className="text-xl font-extrabold tracking-tight text-slate-900">
+              Prep<span className="text-sky-500">AI</span>
             </span>
           </div>
 
@@ -93,64 +93,63 @@ const LandingPage = () => {
 
       {/* Hero Section */}
       <main className="flex-1">
-        <section className="relative pt-20 pb-24 px-6 overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-900/30 via-slate-950 to-slate-950 pointer-events-none" />
+        <section className="relative pt-20 pb-24 px-6 overflow-hidden bg-gradient-to-b from-sky-50/50 via-white to-white">
           <div className="max-w-5xl mx-auto text-center relative z-10 space-y-6">
-            <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-300 text-xs font-semibold">
-              <Target className="w-3.5 h-3.5" />
-              <span>Next-Generation Technical Interview Platform</span>
+            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-sky-50 border border-sky-200 text-sky-700 text-xs font-semibold shadow-xs">
+              <Target className="w-3.5 h-3.5 text-sky-500" />
+              <span>Next-Generation Technical Placement & Interview Platform</span>
             </div>
 
-            <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
+            <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
               Prepare Smarter.{' '}
-              <span className="bg-gradient-to-r from-brand-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
+              <span className="text-sky-600">
                 Interview Better.
               </span>
             </h1>
 
-            <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-              PrepAI combines structured DSA practice, realistic AI mock interview simulations, and actionable analytics to elevate your engineering career.
+            <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+              PrepAI guides you from foundational concepts to practice, topic tests, AI mock interviews, and full-length placement tests with actionable analytics.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
               <Link to={isAuthenticated ? '/dashboard' : '/register'}>
-                <Button size="lg" variant="primary" icon={ArrowRight} className="w-full sm:w-auto">
+                <Button size="lg" variant="primary" icon={ArrowRight} className="w-full sm:w-auto shadow-md">
                   Start Preparing Now
                 </Button>
               </Link>
               <a href="#features">
                 <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                  Explore Features
+                  Explore Learning Journey
                 </Button>
               </a>
             </div>
 
             {/* Micro badges */}
-            <div className="pt-10 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400">
+            <div className="pt-10 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-600">
               <div className="flex items-center space-x-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                 <span>500+ Curated Problems</span>
               </div>
               <div className="flex items-center space-x-1.5">
-                <ShieldCheck className="w-4 h-4 text-brand-400" />
-                <span>AI Feedback Engine</span>
+                <ShieldCheck className="w-4 h-4 text-sky-500" />
+                <span>Structured Topic Lessons</span>
               </div>
               <div className="flex items-center space-x-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>Real Company Benchmarks</span>
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                <span>AI Interview Evaluations</span>
               </div>
             </div>
           </div>
         </section>
 
         {/* Features Grid Section */}
-        <section id="features" className="py-20 px-6 max-w-7xl mx-auto border-t border-slate-800/80">
+        <section id="features" className="py-20 px-6 max-w-7xl mx-auto border-t border-slate-100">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">
-              Everything You Need to Ace Tech Interviews
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+              Complete Placement Preparation Journey
             </h2>
-            <p className="text-sm text-slate-400">
-              Designed specifically for computer science students and software engineers aiming for top tech offers.
+            <p className="text-sm text-slate-600">
+              Structured step-by-step guidance designed specifically for software engineering candidates aiming for top-tier offers.
             </p>
           </div>
 
@@ -158,18 +157,18 @@ const LandingPage = () => {
             {features.map((feature) => {
               const Icon = feature.icon;
               return (
-                <Card key={feature.title} hover className="flex flex-col justify-between space-y-4">
+                <Card key={feature.title} hover className="flex flex-col justify-between space-y-4 border-slate-200/80 shadow-xs">
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="p-2.5 rounded-xl bg-brand-500/10 text-brand-400 border border-brand-500/20">
+                      <div className="p-2.5 rounded-xl bg-sky-50 text-sky-600 border border-sky-100">
                         <Icon className="w-6 h-6" />
                       </div>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200">
                         {feature.badge}
                       </span>
                     </div>
-                    <h3 className="text-base font-bold text-slate-100">{feature.title}</h3>
-                    <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                    <h3 className="text-base font-bold text-slate-900">{feature.title}</h3>
+                    <p className="text-xs text-slate-600 mt-2 leading-relaxed">
                       {feature.description}
                     </p>
                   </div>
@@ -181,19 +180,19 @@ const LandingPage = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-950 border-t border-slate-900 py-10 px-6 text-xs text-slate-500">
+      <footer className="bg-slate-50 border-t border-slate-200 py-10 px-6 text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 rounded bg-brand-600 flex items-center justify-center text-white">
+            <div className="w-6 h-6 rounded bg-sky-500 flex items-center justify-center text-white">
               <Sparkles className="w-3.5 h-3.5" />
             </div>
-            <span className="font-bold text-slate-300">PrepAI</span>
+            <span className="font-bold text-slate-800">PrepAI</span>
             <span>&copy; {new Date().getFullYear()} PrepAI Inc. All rights reserved.</span>
           </div>
-          <div className="flex items-center space-x-6 text-slate-400">
-            <Link to="/" className="hover:text-slate-200">Privacy Policy</Link>
-            <Link to="/" className="hover:text-slate-200">Terms of Service</Link>
-            <Link to="/" className="hover:text-slate-200">Support</Link>
+          <div className="flex items-center space-x-6 text-slate-500 font-medium">
+            <Link to="/" className="hover:text-slate-800">Privacy Policy</Link>
+            <Link to="/" className="hover:text-slate-800">Terms of Service</Link>
+            <Link to="/" className="hover:text-slate-800">Support</Link>
           </div>
         </div>
       </footer>

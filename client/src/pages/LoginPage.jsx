@@ -59,24 +59,24 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 selection:bg-brand-500 selection:text-white">
+    <div className="min-h-screen bg-slate-50/50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 selection:bg-sky-500 selection:text-white">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <Link to="/" className="inline-flex items-center space-x-2 group mb-6">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center text-white shadow-lg shadow-brand-600/30 group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-sky-500 flex items-center justify-center text-white shadow-md shadow-sky-500/20 group-hover:scale-105 transition-transform">
             <Sparkles className="w-6 h-6" />
           </div>
-          <span className="text-2xl font-extrabold text-white">
-            Prep<span className="text-brand-500">AI</span>
+          <span className="text-2xl font-extrabold text-slate-900">
+            Prep<span className="text-sky-500">AI</span>
           </span>
         </Link>
-        <h2 className="text-2xl font-bold tracking-tight text-slate-100">Welcome Back</h2>
-        <p className="mt-1.5 text-xs text-slate-400">
-          Sign in to access your interview preparation dashboard
+        <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">Welcome Back</h2>
+        <p className="mt-1.5 text-xs text-slate-500">
+          Sign in to access your placement preparation dashboard
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
-        <Card>
+        <Card className="border border-slate-200/80 shadow-md">
           {formError && <ErrorMessage message={formError} className="mb-4" />}
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -105,17 +105,17 @@ const LoginPage = () => {
             />
 
             <div className="flex items-center justify-between text-xs pt-1">
-              <label className="flex items-center text-slate-400 cursor-pointer">
+              <label className="flex items-center text-slate-600 cursor-pointer">
                 <input
                   type="checkbox"
-                  className="rounded border-slate-700 bg-slate-900 text-brand-500 focus:ring-brand-500"
+                  className="rounded border-slate-300 text-sky-500 focus:ring-sky-400"
                 />
-                <span className="ml-2">Remember me</span>
+                <span className="ml-2 font-medium">Remember me</span>
               </label>
 
               <Link
                 to="/forgot-password"
-                className="font-medium text-brand-400 hover:text-brand-300"
+                className="font-semibold text-sky-600 hover:text-sky-700"
               >
                 Forgot password?
               </Link>
@@ -133,10 +133,10 @@ const LoginPage = () => {
             </Button>
           </form>
 
-          <div className="mt-6 border-t border-slate-800/80 pt-4 text-center">
-            <p className="text-xs text-slate-400">
+          <div className="mt-6 border-t border-slate-100 pt-4 text-center">
+            <p className="text-xs text-slate-500">
               Don&apos;t have an account?{' '}
-              <Link to="/register" className="font-semibold text-brand-400 hover:text-brand-300">
+              <Link to="/register" className="font-semibold text-sky-600 hover:text-sky-700">
                 Create an account
               </Link>
             </p>

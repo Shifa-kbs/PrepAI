@@ -164,27 +164,27 @@ const QuestionBankPage = () => {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center space-x-2 px-2.5 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-300 text-xs font-semibold mb-2">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Phase 3 Question Bank & Progress</span>
+          <div className="inline-flex items-center space-x-2 px-2.5 py-1 rounded-full bg-sky-50 border border-sky-200 text-sky-700 text-xs font-semibold mb-2">
+            <Sparkles className="w-3.5 h-3.5 text-sky-500" />
+            <span>Curated Placement Question Bank</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             Technical Question Bank
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
-            Browse, filter, and practice curated interview questions across DSA, System Design, Core CS, and Frameworks with instant verification.
+          <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
+            Browse, filter, and practice curated interview questions across DSA, Core CS, and Frameworks with instant sandbox execution.
           </p>
         </div>
 
         {/* Quick Stats Banner */}
         <div className="flex items-center gap-3">
-          <Card className="px-3.5 py-2.5 bg-slate-900/90 border-slate-800 flex items-center space-x-3">
-            <div className="p-2 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20">
+          <Card className="px-3.5 py-2.5 bg-white border-slate-200 flex items-center space-x-3 shadow-xs">
+            <div className="p-2 rounded-lg bg-sky-50 text-sky-600 border border-sky-200">
               <BookOpen className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-[10px] uppercase font-bold tracking-wider text-slate-500">Total in Bank</p>
-              <p className="text-sm font-extrabold text-white">{pagination.total}</p>
+              <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Total in Bank</p>
+              <p className="text-sm font-extrabold text-slate-900">{pagination.total}</p>
             </div>
           </Card>
         </div>

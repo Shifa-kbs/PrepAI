@@ -1,15 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   History,
-  Calendar,
   Clock,
-  Award,
   ChevronRight,
-  RotateCcw,
   BookOpen,
-  Filter,
-  CheckCircle2,
-  AlertTriangle,
 } from 'lucide-react';
 import Card from '../common/Card';
 import Button from '../common/Button';
@@ -74,26 +68,26 @@ const AptitudeHistory = ({ onSelectSession, onStartNew }) => {
       {/* Header & Filter Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <History className="w-5 h-5 text-brand-400" />
+          <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+            <History className="w-5 h-5 text-sky-600" />
             <span>Aptitude Assessment History</span>
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             Review past test scores, accuracy trends, and step-by-step explanations.
           </p>
         </div>
 
         {/* Section Filter Pills */}
-        <div className="flex flex-wrap items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
+        <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
           {['All', 'Quantitative Aptitude', 'Logical Reasoning', 'Verbal Ability', 'Full Aptitude Test'].map(
             (sec) => (
               <button
                 key={sec}
                 onClick={() => setSectionFilter(sec)}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
                   sectionFilter === sec
-                    ? 'bg-brand-600 text-white font-semibold shadow-sm'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    ? 'bg-white text-sky-700 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 {sec === 'All' ? 'All Sections' : sec.replace(' Aptitude', '').replace(' Ability', '')}
@@ -103,91 +97,88 @@ const AptitudeHistory = ({ onSelectSession, onStartNew }) => {
         </div>
       </div>
 
-      {/* History List */}
+      {/* History Session Cards */}
       {filteredSessions.length === 0 ? (
-        <Card className="text-center py-16 bg-slate-900/60 border-slate-800 space-y-4">
-          <Award className="w-12 h-12 text-slate-600 mx-auto" />
+        <Card className="text-center py-16 bg-white border-slate-200 shadow-xs space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center mx-auto text-sky-600">
+            <BookOpen className="w-6 h-6" />
+          </div>
           <div className="space-y-1">
-            <h3 className="text-base font-bold text-white">No Assessment History Found</h3>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto">
-              You haven't completed any aptitude assessments in this section yet. Take a section test
-              or topic practice to record your first score!
+            <h3 className="text-base font-bold text-slate-900">No Assessment Records Found</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+              You haven't completed any aptitude assessments in this category yet. Take your first timed
+              section test or full-length placement mock.
             </p>
           </div>
-          <Button variant="primary" size="sm" onClick={onStartNew} className="text-xs font-semibold">
-            Start First Assessment
+          <Button variant="primary" size="sm" onClick={onStartNew} className="text-xs font-bold">
+            Start Assessment Now
           </Button>
         </Card>
       ) : (
         <div className="space-y-3">
-          {filteredSessions.map((s) => {
-            const accuracy = s.accuracy || 0;
-            const isHighAccuracy = accuracy >= 70;
-            const isModerate = accuracy >= 40 && accuracy < 70;
+          {filteredSessions.map((sessionItem) => {
+            const isCompleted = sessionItem.status === 'completed';
+            const accuracy = sessionItem.accuracy ?? 0;
+            const score = sessionItem.score ?? 0;
+
+            let badgeColor = 'bg-slate-100 text-slate-700 border-slate-200';
+            if (accuracy >= 80) badgeColor = 'bg-emerald-50 text-emerald-800 border-emerald-300';
+            else if (accuracy >= 60) badgeColor = 'bg-sky-50 text-sky-800 border-sky-300';
+            else if (accuracy > 0) badgeColor = 'bg-amber-50 text-amber-800 border-amber-300';
 
             return (
               <Card
-                key={s._id}
-                className="bg-slate-900/90 border-slate-800 hover:border-slate-700 transition-all p-4 sm:p-5"
+                key={sessionItem._id}
+                className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border-slate-200 hover:border-sky-300 hover:shadow-md transition-all shadow-xs"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  {/* Left Info */}
-                  <div className="space-y-1.5">
+                <div className="space-y-2 flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-bold text-sky-600">
+                      {sessionItem.section || sessionItem.category}
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                      {sessionItem.mode === 'topic' ? 'Practice Mode' : 'Timed Assessment'}
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                      {sessionItem.difficulty}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{formatTime(sessionItem.timeTakenSeconds || 0)}</span>
+                    </span>
+                    <span>•</span>
+                    <span>{sessionItem.totalQuestions} Questions</span>
+                    <span>•</span>
+                    <span>{formatDate(sessionItem.completedAt || sessionItem.createdAt)}</span>
+                  </div>
+                </div>
+
+                {/* Score & View CTA */}
+                <div className="flex items-center space-x-4 shrink-0 sm:border-l sm:border-slate-100 sm:pl-5">
+                  <div className="text-right">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-brand-500/10 text-brand-300 border border-brand-500/20">
-                        {s.section || s.category}
+                      <span className="text-xl font-black text-slate-900">{score} pts</span>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded border ${badgeColor}`}>
+                        {accuracy}%
                       </span>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-                        {s.mode === 'topic' ? 'Practice' : 'Timed Test'}
-                      </span>
-                      <span className="text-[10px] text-slate-400">{s.difficulty}</span>
                     </div>
-
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 pt-1">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                        <span>{formatDate(s.completedAt)}</span>
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-slate-500" />
-                        <span>{formatTime(s.timeTakenSeconds || 0)}</span>
-                      </span>
-                      <span>{s.totalQuestions} Questions</span>
-                    </div>
+                    <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
+                      {isCompleted ? 'Assessment Finished' : 'Incomplete Session'}
+                    </span>
                   </div>
 
-                  {/* Right Score & Review Button */}
-                  <div className="flex items-center justify-between sm:justify-end gap-5 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-800">
-                    <div className="text-right">
-                      <p className="text-[10px] uppercase font-bold text-slate-400">Score</p>
-                      <p className="text-base font-black text-white">{s.score} pts</p>
-                    </div>
-
-                    <div className="text-right min-w-[70px]">
-                      <p className="text-[10px] uppercase font-bold text-slate-400">Accuracy</p>
-                      <p
-                        className={`text-base font-black ${
-                          isHighAccuracy
-                            ? 'text-emerald-400'
-                            : isModerate
-                            ? 'text-amber-400'
-                            : 'text-rose-400'
-                        }`}
-                      >
-                        {s.accuracy}%
-                      </p>
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      icon={BookOpen}
-                      onClick={() => onSelectSession(s._id)}
-                      className="text-xs font-semibold"
-                    >
-                      Review
-                    </Button>
-                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onSelectSession(sessionItem._id)}
+                    className="text-xs font-bold"
+                  >
+                    <span>Review</span>
+                    <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                  </Button>
                 </div>
               </Card>
             );
@@ -197,26 +188,26 @@ const AptitudeHistory = ({ onSelectSession, onStartNew }) => {
 
       {/* Pagination Controls */}
       {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between pt-4 text-xs text-slate-400">
+        <div className="flex items-center justify-between pt-4 border-t border-slate-200 text-xs text-slate-500">
           <span>
-            Page {pagination.page} of {pagination.totalPages} ({pagination.total} Total Attempts)
+            Showing Page {page} of {pagination.totalPages}
           </span>
           <div className="flex items-center space-x-2">
             <Button
               variant="outline"
-              size="sm"
-              disabled={!pagination.hasPrevPage}
-              onClick={() => setPage((p) => p - 1)}
-              className="text-xs"
+              size="xs"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="text-xs font-bold"
             >
               Previous
             </Button>
             <Button
               variant="outline"
-              size="sm"
-              disabled={!pagination.hasNextPage}
+              size="xs"
+              disabled={page >= pagination.totalPages}
               onClick={() => setPage((p) => p + 1)}
-              className="text-xs"
+              className="text-xs font-bold"
             >
               Next
             </Button>

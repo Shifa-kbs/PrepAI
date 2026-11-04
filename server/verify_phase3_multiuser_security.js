@@ -62,6 +62,27 @@ async function runMultiUserVerification() {
     const password = 'Password123!';
 
     try {
+      // Wait for Mongoose connection if currently connecting
+      if (mongoose.connection.readyState !== 1) {
+        console.log(`[Setup] Waiting for MongoDB connection (current readyState: ${mongoose.connection.readyState})...`);
+        await new Promise((resolve, reject) => {
+          if (mongoose.connection.readyState === 1) return resolve();
+          const timer = setTimeout(() => {
+            if (mongoose.connection.readyState === 1) resolve();
+            else reject(new Error(`Timed out waiting for MongoDB connection (readyState: ${mongoose.connection.readyState})`));
+          }, 8000);
+          mongoose.connection.once('connected', () => {
+            clearTimeout(timer);
+            resolve();
+          });
+          mongoose.connection.once('error', (err) => {
+            clearTimeout(timer);
+            reject(err);
+          });
+        });
+        console.log('✅ MongoDB connection ready');
+      }
+
       // 1. Register User A
       console.log('\n[Step 1] Registering User A (Alice)...');
       const regA = await makeRequest(
@@ -91,7 +112,8 @@ async function runMultiUserVerification() {
       if (!listRes.body.questions || listRes.body.questions.length === 0) {
         throw new Error('No questions found in database');
       }
-      const testQ = listRes.body.questions[0];
+      const mcqDoc = await Question.findOne({ correctAnswerIndex: { $exists: true, $ne: null } }).select('+correctAnswerIndex +explanation +sampleAnswer');
+      const testQ = mcqDoc || listRes.body.questions[0];
       const qId = testQ._id;
       console.log(`\n[Step 3] Picked test question "${testQ.title}" (${qId})`);
 

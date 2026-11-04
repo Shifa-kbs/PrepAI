@@ -1,9 +1,15 @@
 /**
  * Master Question Bank Aggregator & Validator
  * Aggregates all modular subject question collections, validates schema compliance and slug uniqueness.
+ * CS Fundamentals includes strictly: OOP, DBMS, SQL, Operating Systems, Computer Networks.
+ * Programming & DSA includes: DSA, Java, Python, C++, JavaScript.
+ * Aptitude includes: Quantitative Aptitude, Logical Reasoning, Verbal Ability.
  */
 
 const javaOop = require('./javaOop');
+const python = require('./python');
+const cpp = require('./cpp');
+const javascript = require('./javascript');
 const dbmsSql = require('./dbmsSql');
 const operatingSystems = require('./operatingSystems');
 const computerNetworks = require('./computerNetworks');
@@ -11,10 +17,12 @@ const dsa = require('./dsa');
 const quantitativeAptitude = require('./quantitativeAptitude');
 const logicalReasoning = require('./logicalReasoning');
 const verbalAbility = require('./verbalAbility');
-const webDevJs = require('./webDevJs');
 
 const allDatasets = [
   ...javaOop,
+  ...python,
+  ...cpp,
+  ...javascript,
   ...dbmsSql,
   ...operatingSystems,
   ...computerNetworks,
@@ -22,7 +30,6 @@ const allDatasets = [
   ...quantitativeAptitude,
   ...logicalReasoning,
   ...verbalAbility,
-  ...webDevJs,
 ];
 
 // Validation & Integrity Verification

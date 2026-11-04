@@ -23,6 +23,16 @@ const errorHandler = (err, req, res, next) => {
     statusCode = 400;
   }
 
+  // Mongoose connection, server selection, and buffering errors
+  if (
+    err.name === 'MongooseServerSelectionError' ||
+    (err.name === 'MongooseError' && (err.message?.includes('buffering timed out') || err.message?.includes('bufferCommands')))
+  ) {
+    statusCode = 503;
+    message =
+      'Database connection failed. Please ensure your MongoDB Atlas cluster is online and your current IP address is whitelisted in MongoDB Atlas Network Access.';
+  }
+
   res.status(statusCode).json({
     success: false,
     message,

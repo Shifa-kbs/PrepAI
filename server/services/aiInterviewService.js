@@ -4,15 +4,32 @@ dotenv.config();
 
 /**
  * AI Interview Service utilizing Google Gemini REST API
- * Supports Mock Mode for testing without consuming API credits
+ * Supports Live Gemini Mode and Offline Simulated Mock AI Mode
+ * Guarantees zero crashing when API keys are absent or network is restricted.
  */
 
 const getApiKey = () => {
-  return process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
+  return (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '').trim();
 };
 
 const getModelName = () => {
   return process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+};
+
+const getAIStatus = () => {
+  const key = getApiKey();
+  const isMockEnv = process.env.MOCK_AI === 'true';
+  const isLive = Boolean(key) && !isMockEnv;
+
+  return {
+    isConfigured: isLive,
+    mode: isLive ? 'live-gemini' : 'simulated-ai',
+    providerName: isLive ? `Google Gemini (${getModelName()})` : 'PrepAI Simulated AI Interviewer',
+    model: getModelName(),
+    description: isLive
+      ? 'Live Google Gemini AI API is actively connected and generating dynamic questions.'
+      : 'Simulated AI Interviewer is active. Realistic questions, real-time evaluations, and mentorship roadmaps are generated offline without consuming API credits.',
+  };
 };
 
 /**
@@ -32,14 +49,13 @@ const cleanAndParseJson = (rawText) => {
   try {
     return JSON.parse(cleaned);
   } catch (err) {
-    // Attempt extracting substring between first { and last } or [ and ]
     const startObj = cleaned.indexOf('{');
     const endObj = cleaned.lastIndexOf('}');
     if (startObj !== -1 && endObj !== -1 && endObj > startObj) {
       try {
         return JSON.parse(cleaned.substring(startObj, endObj + 1));
       } catch (e) {
-        // Fall through to throw below
+        // Fall through
       }
     }
     throw new Error(`Failed to parse AI provider JSON output: ${err.message}`);
@@ -53,9 +69,7 @@ const callGeminiApi = async (systemInstruction, userPrompt) => {
   const apiKey = getApiKey();
 
   if (!apiKey) {
-    throw new Error(
-      'GEMINI_API_KEY is not configured on the server. Please add GEMINI_API_KEY to your server/.env file with a valid Google Gemini API key to enable AI Mock Interviews.'
-    );
+    throw new Error('GEMINI_API_KEY is not configured on the server.');
   }
 
   const model = getModelName();
@@ -80,7 +94,7 @@ const callGeminiApi = async (systemInstruction, userPrompt) => {
   };
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 35000); // 35s timeout
+  const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout
 
   try {
     const response = await fetch(url, {
@@ -104,7 +118,7 @@ const callGeminiApi = async (systemInstruction, userPrompt) => {
       if (response.status === 401 || response.status === 403) {
         throw new Error(`Invalid Gemini API credentials: ${parsedErr}`);
       } else if (response.status === 429) {
-        throw new Error('Gemini API rate limit exceeded. Please wait a moment and try again.');
+        throw new Error('Gemini API rate limit exceeded.');
       } else {
         throw new Error(`Gemini API Error (HTTP ${response.status}): ${parsedErr}`);
       }
@@ -119,15 +133,13 @@ const callGeminiApi = async (systemInstruction, userPrompt) => {
     return candidate.content.parts[0].text;
   } catch (error) {
     clearTimeout(timeoutId);
-    if (error.name === 'AbortError') {
-      throw new Error('Gemini API request timed out after 35 seconds. Please try again.');
-    }
     throw error;
   }
 };
 
 /**
  * Generate role-appropriate interview questions
+ * Gracefully falls back to simulated generator if Gemini is unavailable
  */
 const generateInterviewQuestions = async ({
   jobRole = 'Full Stack Developer',
@@ -137,8 +149,10 @@ const generateInterviewQuestions = async ({
   topics = [],
   questionCount = 5,
 }) => {
-  // Check for test mock provider mode
-  if (process.env.MOCK_AI === 'true') {
+  const apiKey = getApiKey();
+  const forceMock = process.env.MOCK_AI === 'true';
+
+  if (!apiKey || forceMock) {
     return generateMockQuestions({ jobRole, interviewType, difficulty, topics, questionCount });
   }
 
@@ -164,24 +178,30 @@ Respond strictly in valid JSON format matching this schema:
 
   const userPrompt = `Generate exactly ${questionCount} ${difficulty} level questions for a ${jobRole} interview in ${interviewType} format focusing on ${topicStr}.`;
 
-  const rawJson = await callGeminiApi(systemInstruction, userPrompt);
-  const parsed = cleanAndParseJson(rawJson);
+  try {
+    const rawJson = await callGeminiApi(systemInstruction, userPrompt);
+    const parsed = cleanAndParseJson(rawJson);
 
-  if (!parsed || !Array.isArray(parsed.questions) || parsed.questions.length === 0) {
-    throw new Error('Invalid format received from Gemini: questions array is missing or empty.');
+    if (!parsed || !Array.isArray(parsed.questions) || parsed.questions.length === 0) {
+      throw new Error('Empty questions array from Gemini');
+    }
+
+    return parsed.questions.slice(0, questionCount).map((q, idx) => ({
+      questionText: q.questionText || `Interview Question ${idx + 1}`,
+      category: q.category || (interviewType === 'Behavioral' ? 'Behavioral' : 'Technical'),
+      difficulty: q.difficulty || difficulty,
+      contextHint: q.contextHint || 'Explain your thought process and support with real-world examples.',
+      aiProvider: 'gemini-1.5-flash',
+    }));
+  } catch (err) {
+    console.warn(`[AI Interview Notice] Live Gemini generation failed (${err.message}). Using simulated interviewer fallback.`);
+    return generateMockQuestions({ jobRole, interviewType, difficulty, topics, questionCount });
   }
-
-  // Validate and normalize questions
-  return parsed.questions.slice(0, questionCount).map((q, idx) => ({
-    questionText: q.questionText || `Interview Question ${idx + 1}`,
-    category: q.category || (interviewType === 'Behavioral' ? 'Behavioral' : 'Technical'),
-    difficulty: q.difficulty || difficulty,
-    contextHint: q.contextHint || 'Explain your thought process and support with real-world examples.',
-  }));
 };
 
 /**
  * Evaluate submitted answer with structured feedback
+ * Gracefully falls back to simulated evaluator if Gemini is unavailable
  */
 const evaluateAnswer = async ({
   jobRole,
@@ -191,11 +211,6 @@ const evaluateAnswer = async ({
   category,
   userAnswer,
 }) => {
-  // Check for test mock provider mode
-  if (process.env.MOCK_AI === 'true') {
-    return generateMockEvaluation({ questionText, userAnswer });
-  }
-
   if (!userAnswer || userAnswer.trim().length === 0) {
     return {
       relevanceScore: 0,
@@ -207,7 +222,15 @@ const evaluateAnswer = async ({
       weaknesses: ['The question was left blank.'],
       suggestedImprovements: ['Provide a structured answer explaining the core concept, implementation details, and trade-offs.'],
       followUpQuestion: null,
+      provider: 'automated-evaluator',
     };
+  }
+
+  const apiKey = getApiKey();
+  const forceMock = process.env.MOCK_AI === 'true';
+
+  if (!apiKey || forceMock) {
+    return generateMockEvaluation({ questionText, userAnswer, jobRole });
   }
 
   const systemInstruction = `You are a senior hiring manager and tech lead assessing an interview response for a ${jobRole} position.
@@ -244,36 +267,46 @@ Respond strictly in valid JSON matching this schema:
 
   const userPrompt = `Candidate's Submitted Answer:\n"""\n${userAnswer}\n"""\n\nEvaluate this answer now.`;
 
-  const rawJson = await callGeminiApi(systemInstruction, userPrompt);
-  const parsed = cleanAndParseJson(rawJson);
+  try {
+    const rawJson = await callGeminiApi(systemInstruction, userPrompt);
+    const parsed = cleanAndParseJson(rawJson);
 
-  const clamp = (val, def = 70) => {
-    const num = Number(val);
-    if (isNaN(num)) return def;
-    return Math.max(0, Math.min(100, Math.round(num)));
-  };
+    const clamp = (val, def = 70) => {
+      const num = Number(val);
+      if (isNaN(num)) return def;
+      return Math.max(0, Math.min(100, Math.round(num)));
+    };
 
-  return {
-    relevanceScore: clamp(parsed.relevanceScore, 70),
-    clarityScore: clamp(parsed.clarityScore, 70),
-    depthScore: clamp(parsed.depthScore, 70),
-    overallScore: clamp(parsed.overallScore, 70),
-    feedback: typeof parsed.feedback === 'string' && parsed.feedback.trim()
-      ? parsed.feedback.trim()
-      : 'Good effort. Your answer touched on key concepts, but could benefit from deeper technical rationale and concrete examples.',
-    strengths: Array.isArray(parsed.strengths) ? parsed.strengths.filter(Boolean) : ['Addressed the main question'],
-    weaknesses: Array.isArray(parsed.weaknesses) ? parsed.weaknesses.filter(Boolean) : ['Could provide more edge cases and depth'],
-    suggestedImprovements: Array.isArray(parsed.suggestedImprovements)
-      ? parsed.suggestedImprovements.filter(Boolean)
-      : ['Structure your answer by first defining the high-level pattern, followed by implementation details and runtime trade-offs.'],
-    followUpQuestion: typeof parsed.followUpQuestion === 'string' && parsed.followUpQuestion.trim().length > 5
-      ? parsed.followUpQuestion.trim()
-      : null,
-  };
+    return {
+      relevanceScore: clamp(parsed.relevanceScore, 75),
+      clarityScore: clamp(parsed.clarityScore, 75),
+      depthScore: clamp(parsed.depthScore, 70),
+      overallScore: clamp(parsed.overallScore, 73),
+      feedback: typeof parsed.feedback === 'string' && parsed.feedback.trim()
+        ? parsed.feedback.trim()
+        : 'Good effort addressing the main components of the question. Continue practicing real-world implementation depth.',
+      strengths: Array.isArray(parsed.strengths) && parsed.strengths.length > 0
+        ? parsed.strengths.filter(Boolean)
+        : ['Clear technical communication', 'Addressed the core question premise directly'],
+      weaknesses: Array.isArray(parsed.weaknesses) && parsed.weaknesses.length > 0
+        ? parsed.weaknesses.filter(Boolean)
+        : ['Could expand on failure modes and edge cases'],
+      suggestedImprovements: Array.isArray(parsed.suggestedImprovements) && parsed.suggestedImprovements.length > 0
+        ? parsed.suggestedImprovements.filter(Boolean)
+        : ['Support technical statements with specific benchmark numbers or architecture trade-offs.'],
+      followUpQuestion: typeof parsed.followUpQuestion === 'string' && parsed.followUpQuestion.trim().length > 10
+        ? parsed.followUpQuestion.trim()
+        : null,
+      provider: 'gemini-live',
+    };
+  } catch (err) {
+    console.warn(`[AI Interview Notice] Live Gemini evaluation failed (${err.message}). Using simulated evaluation fallback.`);
+    return generateMockEvaluation({ questionText, userAnswer, jobRole });
+  }
 };
 
 /**
- * Generate comprehensive final report summarizing the entire interview
+ * Generate comprehensive final report summarizing the entire interview and acting as AI mentor
  */
 const generateFinalReport = async ({
   jobRole,
@@ -282,15 +315,75 @@ const generateFinalReport = async ({
   experienceLevel,
   questions = [],
 }) => {
-  // Check for test mock provider mode
-  if (process.env.MOCK_AI === 'true') {
-    return generateMockFinalReport({ jobRole, questions });
+  const totalQuestions = questions.length;
+  const answeredQuestions = questions.filter(
+    (q) =>
+      q.userAnswer &&
+      q.userAnswer.trim().length > 0 &&
+      !q.userAnswer.startsWith('[Skipped') &&
+      q.status === 'answered'
+  );
+  const answeredCount = answeredQuestions.length;
+  const skippedCount = totalQuestions - answeredCount;
+
+  // RULE A: ZERO ANSWERS SUBMITTED
+  if (answeredCount === 0) {
+    return {
+      overallScore: null,
+      technicalKnowledge: null,
+      answerRelevance: null,
+      problemSolving: null,
+      communicationClarity: null,
+      evaluationStatus: 'Not Evaluated',
+      answeredCount: 0,
+      skippedCount: totalQuestions,
+      totalQuestions,
+      summary:
+        'No answers were submitted during this interview. We cannot evaluate your performance without candidate responses.',
+      topStrengths: [],
+      keyAreasForImprovement: [
+        'No candidate responses provided. Attempt answering questions during your next interview session to receive targeted competency evaluation.',
+      ],
+      missingConcepts: [],
+      recommendedTopicsToPractice: [
+        'Review foundational concepts in the Learning Studio before retaking',
+      ],
+      suggestedNextSteps: [
+        'Start a new mock interview session and attempt every question',
+        'Review technical concepts in the PrepAI Learning Studio',
+      ],
+      studyRoadmap: [
+        { timeframe: 'Immediate', focus: 'Start a new interview session and provide answers for each prompt' },
+        { timeframe: 'Week 1', focus: 'Revise core topics in the Learning Studio' },
+      ],
+      disclaimer: 'Evaluation requires candidate responses.',
+      provider: 'unanswered-session',
+      isSimulated: false,
+    };
   }
 
-  const answeredQuestions = questions.filter((q) => q.userAnswer && q.userAnswer.trim().length > 0);
-  const averageScore = answeredQuestions.length > 0
-    ? Math.round(answeredQuestions.reduce((acc, q) => acc + (q.score || 0), 0) / answeredQuestions.length)
-    : 0;
+  // Calculate scores exclusively over answered questions (Rule B & C)
+  const averageScore = Math.round(
+    answeredQuestions.reduce((acc, q) => acc + (q.score || 0), 0) / answeredCount
+  );
+
+  const isPartial = answeredCount < totalQuestions;
+  const evaluationStatus = isPartial ? 'Partial Evaluation' : 'Completed';
+
+  const apiKey = getApiKey();
+  const forceMock = process.env.MOCK_AI === 'true';
+
+  if (!apiKey || forceMock) {
+    return generateMockFinalReport({
+      jobRole,
+      questions,
+      averageScore,
+      answeredCount,
+      skippedCount,
+      totalQuestions,
+      isPartial,
+    });
+  }
 
   const summaryContext = questions.map((q, idx) => ({
     qIndex: idx + 1,
@@ -302,14 +395,14 @@ const generateFinalReport = async ({
     weaknesses: q.weaknesses || [],
   }));
 
-  const systemInstruction = `You are an executive hiring board member synthesizing a final evaluation report for a candidate interview.
+  const systemInstruction = `You are an elite career mentor and tech lead synthesizing a final evaluation report for a candidate interview.
 Candidate Target: ${experienceLevel} ${jobRole}
 Interview Type: ${interviewType}
 Difficulty: ${difficulty}
+Status: ${evaluationStatus} (${answeredCount} of ${totalQuestions} questions answered).
 
-Below are the transcript summaries of each question and answer from the session.
-Synthesize an executive candidate feedback report.
-Scores must be numbers from 0 to 100:
+Synthesize an executive candidate feedback report and actionable improvement mentor roadmap.
+Scores must be numbers from 0 to 100 based strictly on the ${answeredCount} answered responses:
 - overallScore
 - technicalKnowledge
 - answerRelevance
@@ -323,63 +416,100 @@ Respond strictly in valid JSON matching this schema:
   "answerRelevance": 85,
   "problemSolving": 78,
   "communicationClarity": 82,
-  "summary": "2-4 sentence executive overview of the candidate's interview performance, readiness for the role, and general impression.",
+  "summary": "2-4 sentence executive overview of the candidate's interview performance and readiness.",
   "topStrengths": [
     "Key overall strength #1",
-    "Key overall strength #2",
-    "Key overall strength #3"
+    "Key overall strength #2"
   ],
   "keyAreasForImprovement": [
     "Major area for improvement #1",
     "Major area for improvement #2"
   ],
+  "missingConcepts": [
+    "Specific concept #1 that was misunderstood or omitted"
+  ],
   "recommendedTopicsToPractice": [
-    "Specific topic or technology #1",
-    "Specific topic or technology #2"
+    "Specific topic #1",
+    "Specific topic #2"
   ],
   "suggestedNextSteps": [
     "Concrete actionable preparation step #1",
     "Concrete actionable preparation step #2"
+  ],
+  "studyRoadmap": [
+    { "phase": "Days 1-2", "focus": "Core concept reinforcement" },
+    { "phase": "Days 3-4", "focus": "Problem-solving drill" },
+    { "phase": "Days 5-7", "focus": "Mock simulation round" }
   ]
 }`;
 
-  const userPrompt = `Interview Performance Transcript:\n${JSON.stringify(summaryContext, null, 2)}`;
+  const userPrompt = `Interview Performance Transcript (${answeredCount}/${totalQuestions} answered):\n${JSON.stringify(summaryContext, null, 2)}`;
 
-  const rawJson = await callGeminiApi(systemInstruction, userPrompt);
-  const parsed = cleanAndParseJson(rawJson);
+  try {
+    const rawJson = await callGeminiApi(systemInstruction, userPrompt);
+    const parsed = cleanAndParseJson(rawJson);
 
-  const clamp = (val, def = 70) => {
-    const num = Number(val);
-    if (isNaN(num)) return def;
-    return Math.max(0, Math.min(100, Math.round(num)));
-  };
+    const clamp = (val, def = 70) => {
+      const num = Number(val);
+      if (isNaN(num)) return def;
+      return Math.max(0, Math.min(100, Math.round(num)));
+    };
 
-  return {
-    overallScore: clamp(parsed.overallScore, averageScore),
-    technicalKnowledge: clamp(parsed.technicalKnowledge, 75),
-    answerRelevance: clamp(parsed.answerRelevance, 80),
-    problemSolving: clamp(parsed.problemSolving, 75),
-    communicationClarity: clamp(parsed.communicationClarity, 80),
-    summary: typeof parsed.summary === 'string' && parsed.summary.trim()
-      ? parsed.summary.trim()
-      : `The candidate demonstrated foundational knowledge for the ${jobRole} position with solid communication. Continued practice in edge-case handling and system architecture will elevate interview readiness.`,
-    topStrengths: Array.isArray(parsed.topStrengths) && parsed.topStrengths.length > 0
-      ? parsed.topStrengths.filter(Boolean)
-      : ['Clear baseline technical vocabulary', 'Coherent communication flow', 'Willingness to explain trade-offs'],
-    keyAreasForImprovement: Array.isArray(parsed.keyAreasForImprovement) && parsed.keyAreasForImprovement.length > 0
-      ? parsed.keyAreasForImprovement.filter(Boolean)
-      : ['Deepen architectural explanations', 'Include more specific performance metrics in responses'],
-    recommendedTopicsToPractice: Array.isArray(parsed.recommendedTopicsToPractice) && parsed.recommendedTopicsToPractice.length > 0
-      ? parsed.recommendedTopicsToPractice.filter(Boolean)
-      : ['System Design & Scalability', 'Advanced Data Structures & Algorithms', 'Behavioral STAR Scenarios'],
-    suggestedNextSteps: Array.isArray(parsed.suggestedNextSteps) && parsed.suggestedNextSteps.length > 0
-      ? parsed.suggestedNextSteps.filter(Boolean)
-      : ['Practice verbalizing code logic out loud', 'Time your responses to remain under 3 minutes per question'],
-  };
+    return {
+      overallScore: clamp(parsed.overallScore, averageScore),
+      technicalKnowledge: clamp(parsed.technicalKnowledge, Math.max(0, averageScore + 2)),
+      answerRelevance: clamp(parsed.answerRelevance, Math.max(0, averageScore + 1)),
+      problemSolving: clamp(parsed.problemSolving, Math.max(0, averageScore - 2)),
+      communicationClarity: clamp(parsed.communicationClarity, Math.max(0, averageScore + 3)),
+      evaluationStatus,
+      answeredCount,
+      skippedCount,
+      totalQuestions,
+      summary: typeof parsed.summary === 'string' && parsed.summary.trim()
+        ? parsed.summary.trim()
+        : `${isPartial ? `[Partial Evaluation: ${answeredCount}/${totalQuestions} Answered] ` : ''}Candidate completed ${answeredCount} responses for ${jobRole}.`,
+      topStrengths: Array.isArray(parsed.topStrengths) && parsed.topStrengths.length > 0
+        ? parsed.topStrengths.filter(Boolean)
+        : ['Clear baseline technical vocabulary', 'Coherent communication flow'],
+      keyAreasForImprovement: Array.isArray(parsed.keyAreasForImprovement) && parsed.keyAreasForImprovement.length > 0
+        ? parsed.keyAreasForImprovement.filter(Boolean)
+        : (isPartial ? [`Attempt all questions in future rounds (${skippedCount} skipped)`] : ['Deepen quantitative metrics in responses']),
+      missingConcepts: Array.isArray(parsed.missingConcepts) && parsed.missingConcepts.length > 0
+        ? parsed.missingConcepts.filter(Boolean)
+        : ['Concurrency lock ordering', 'Cache invalidation strategies'],
+      recommendedTopicsToPractice: Array.isArray(parsed.recommendedTopicsToPractice) && parsed.recommendedTopicsToPractice.length > 0
+        ? parsed.recommendedTopicsToPractice.filter(Boolean)
+        : ['System Design & Scalability', 'Advanced Data Structures & Algorithms'],
+      suggestedNextSteps: Array.isArray(parsed.suggestedNextSteps) && parsed.suggestedNextSteps.length > 0
+        ? parsed.suggestedNextSteps.filter(Boolean)
+        : ['Practice verbalizing code logic out loud', 'Time your responses to remain under 3 minutes per question'],
+      studyRoadmap: Array.isArray(parsed.studyRoadmap) && parsed.studyRoadmap.length > 0
+        ? parsed.studyRoadmap
+        : [
+            { timeframe: 'Days 1-2', focus: 'Revise weak concepts in PrepAI Learning Studio' },
+            { timeframe: 'Days 3-4', focus: 'Solve 5 targeted Medium problems in Practice Sandbox' },
+            { timeframe: 'Days 5-7', focus: 'Retake full mock interview round' },
+          ],
+      disclaimer: 'PrepAI AI Mentor feedback is an educational preparation assessment. Hiring decisions are made independently by employers.',
+      provider: 'gemini-live',
+      isSimulated: false,
+    };
+  } catch (err) {
+    console.warn(`[AI Interview Notice] Live Gemini final report failed (${err.message}). Using simulated mentor synthesis.`);
+    return generateMockFinalReport({
+      jobRole,
+      questions,
+      averageScore,
+      answeredCount,
+      skippedCount,
+      totalQuestions,
+      isPartial,
+    });
+  }
 };
 
 // ==========================================
-// TEST MOCK PROVIDERS (Explicitly Isolated)
+// TEST MOCK PROVIDERS (Offline Simulation)
 // ==========================================
 
 const generateMockQuestions = ({ jobRole, interviewType, difficulty, topics, questionCount }) => {
@@ -449,49 +579,139 @@ const generateMockQuestions = ({ jobRole, interviewType, difficulty, topics, que
   return sampleBank.slice(0, questionCount).map((q) => ({
     ...q,
     difficulty,
+    aiProvider: 'simulated-ai-interviewer',
   }));
 };
 
 const generateMockEvaluation = ({ questionText, userAnswer }) => {
-  const wordCount = (userAnswer || '').trim().split(/\s+/).length;
+  const words = (userAnswer || '').trim().split(/\s+/).filter(Boolean);
+  const wordCount = words.length;
+
   let score = 75;
   if (wordCount < 10) score = 40;
   else if (wordCount > 30) score = 85;
+
+  const hasKeywords = /(scalability|performance|tradeoff|latency|complexity|architecture|security|testing)/i.test(userAnswer);
+  if (hasKeywords) score = Math.min(100, score + 10);
 
   return {
     relevanceScore: score,
     clarityScore: Math.min(100, score + 5),
     depthScore: Math.max(30, score - 5),
     overallScore: score,
-    feedback: `[MOCK AI PROVIDER: Test Mode] Your answer of ${wordCount} words addressed the fundamental aspect of "${questionText.substring(0, 35)}...". Clear technical vocabulary was used.`,
-    strengths: ['Identified core engineering principles', 'Communicated with structured technical terminology'],
-    weaknesses: wordCount < 20 ? ['Answer was relatively brief; could expand on real-world edge cases'] : ['Could include specific latency/throughput trade-offs'],
-    suggestedImprovements: ['Mention concrete benchmarks and production scenarios to reinforce credibility.'],
-    followUpQuestion: score < 70 ? 'Can you elaborate on how you would test this implementation under high load?' : null,
+    feedback: `[Simulated AI Interviewer] Your answer of ${wordCount} words addressed key aspects of the question. ${
+      hasKeywords ? 'Solid use of engineering vocabulary and trade-offs.' : 'Consider incorporating more specific scalability and performance metrics.'
+    }`,
+    strengths: [
+      'Addressed the main question components directly',
+      wordCount >= 20 ? 'Provided adequate structural elaboration' : 'Communicated concisely',
+    ],
+    weaknesses: [
+      wordCount < 20 ? 'Response was relatively brief; expand with concrete examples' : 'Could highlight quantitative benchmarks or production failure modes',
+    ],
+    suggestedImprovements: [
+      'Structure future answers with: 1) Core Definition, 2) Technical Mechanics, 3) Real-world Trade-offs.',
+    ],
+    followUpQuestion: score < 70
+      ? 'How would you test and monitor this implementation in a high-throughput production environment?'
+      : null,
+    provider: 'simulated-ai',
   };
 };
 
-const generateMockFinalReport = ({ jobRole, questions }) => {
-  const answered = questions.filter((q) => q.userAnswer && q.userAnswer.trim().length > 0);
-  const avg = answered.length > 0
-    ? Math.round(answered.reduce((a, b) => a + (b.score || 70), 0) / answered.length)
-    : 70;
+const generateMockFinalReport = ({
+  jobRole,
+  questions = [],
+  averageScore,
+  answeredCount: explicitAnsweredCount,
+  skippedCount: explicitSkippedCount,
+  totalQuestions: explicitTotalQuestions,
+  isPartial: explicitIsPartial,
+}) => {
+  const answered = questions.filter(
+    (q) =>
+      q.userAnswer &&
+      q.userAnswer.trim().length > 0 &&
+      !q.userAnswer.startsWith('[Skipped') &&
+      q.status === 'answered'
+  );
+  const total = explicitTotalQuestions || questions.length;
+  const answeredCount = explicitAnsweredCount !== undefined ? explicitAnsweredCount : answered.length;
+  const skippedCount = explicitSkippedCount !== undefined ? explicitSkippedCount : (total - answeredCount);
+
+  // RULE A: ZERO ANSWERS SUBMITTED
+  if (answeredCount === 0) {
+    return {
+      overallScore: null,
+      technicalKnowledge: null,
+      answerRelevance: null,
+      problemSolving: null,
+      communicationClarity: null,
+      evaluationStatus: 'Not Evaluated',
+      answeredCount: 0,
+      skippedCount: total,
+      totalQuestions: total,
+      summary:
+        'No answers were submitted during this interview. We cannot evaluate your performance without candidate responses.',
+      topStrengths: [],
+      keyAreasForImprovement: [
+        'No candidate responses provided. Attempt answering questions during your next interview session to receive targeted competency evaluation.',
+      ],
+      missingConcepts: [],
+      recommendedTopicsToPractice: [
+        'Review foundational concepts in the Learning Studio before retaking',
+      ],
+      suggestedNextSteps: [
+        'Start a new mock interview session and attempt every question',
+        'Review technical concepts in the PrepAI Learning Studio',
+      ],
+      studyRoadmap: [
+        { timeframe: 'Immediate', focus: 'Start a new interview session and provide answers for each prompt' },
+        { timeframe: 'Week 1', focus: 'Revise core topics in the Learning Studio' },
+      ],
+      disclaimer: 'Evaluation requires candidate responses.',
+      provider: 'simulated-ai-mentor',
+      isSimulated: true,
+    };
+  }
+
+  // Calculate scores exclusively over answered questions
+  const avg = averageScore !== undefined && averageScore !== null
+    ? averageScore
+    : Math.round(answered.reduce((a, b) => a + (b.score || 0), 0) / answeredCount);
+
+  const isPartial = explicitIsPartial !== undefined ? explicitIsPartial : (answeredCount < total);
+  const evaluationStatus = isPartial ? 'Partial Evaluation' : 'Completed';
 
   return {
     overallScore: avg,
-    technicalKnowledge: Math.min(100, avg + 4),
-    answerRelevance: Math.min(100, avg + 2),
-    problemSolving: Math.max(40, avg - 3),
-    communicationClarity: Math.min(100, avg + 5),
-    summary: `[MOCK AI PROVIDER: Test Mode] Candidate demonstrated solid readiness for the ${jobRole} role. Good clarity on core engineering paradigms with room to demonstrate deeper system scalability metrics.`,
+    technicalKnowledge: Math.min(100, avg + 3),
+    answerRelevance: Math.min(100, avg + 1),
+    problemSolving: Math.max(0, avg - 2),
+    communicationClarity: Math.min(100, avg + 2),
+    evaluationStatus,
+    answeredCount,
+    skippedCount,
+    totalQuestions: total,
+    summary: isPartial
+      ? `[Partial Evaluation: ${answeredCount}/${total} Answered] Candidate demonstrated foundational understanding across answered questions for ${jobRole}, but skipped ${skippedCount} question(s). Performance rating is based exclusively on completed answers.`
+      : `Candidate demonstrated solid foundational readiness for the ${jobRole} role across all interview questions.`,
     topStrengths: [
-      'Strong grasp of fundamentals and clear problem framing',
+      'Strong grasp of fundamentals across answered questions',
       'Articulate communication of technical concepts',
-      'Demonstrated awareness of real-world trade-offs',
     ],
-    keyAreasForImprovement: [
-      'Deepen quantitative metrics in architectural decisions',
-      'Elaborate on edge cases and failure modes in distributed environments',
+    keyAreasForImprovement: isPartial
+      ? [
+          `Attempt all questions in future rounds (${skippedCount} question(s) were skipped)`,
+          'Deepen quantitative metrics in architectural decisions',
+        ]
+      : [
+          'Deepen quantitative metrics in architectural decisions',
+          'Elaborate on edge cases and failure modes in distributed environments',
+        ],
+    missingConcepts: [
+      'Concurrency lock contention strategies',
+      'Distributed transaction isolation models',
     ],
     recommendedTopicsToPractice: [
       'Advanced System Design Patterns',
@@ -502,6 +722,14 @@ const generateMockFinalReport = ({ jobRole, questions }) => {
       'Practice mock interview rounds with timed responses',
       'Deep-dive into database internal storage engines and caching topologies',
     ],
+    studyRoadmap: [
+      { phase: 'Days 1-2', focus: 'Revise missing concepts in PrepAI Learning Studio' },
+      { phase: 'Days 3-4', focus: 'Solve 5 targeted Medium problems in Practice Sandbox' },
+      { phase: 'Days 5-7', focus: 'Retake full mock interview round' },
+    ],
+    disclaimer: 'PrepAI AI Mentor feedback is an educational preparation assessment. Hiring decisions are made independently by employers.',
+    provider: 'simulated-ai-mentor',
+    isSimulated: true,
   };
 };
 
@@ -509,6 +737,7 @@ module.exports = {
   generateInterviewQuestions,
   evaluateAnswer,
   generateFinalReport,
+  getAIStatus,
   getApiKey,
   getModelName,
 };

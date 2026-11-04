@@ -474,11 +474,20 @@ const finishInterview = async (req, res, next) => {
       answerRelevance: finalReport.answerRelevance,
       problemSolving: finalReport.problemSolving,
       communicationClarity: finalReport.communicationClarity,
+      evaluationStatus: finalReport.evaluationStatus || (finalReport.overallScore === null ? 'Not Evaluated' : 'Completed'),
+      answeredCount: finalReport.answeredCount ?? 0,
+      skippedCount: finalReport.skippedCount ?? 0,
+      totalQuestions: finalReport.totalQuestions ?? interview.questions.length,
       summary: finalReport.summary,
       topStrengths: finalReport.topStrengths || [],
       keyAreasForImprovement: finalReport.keyAreasForImprovement || [],
+      missingConcepts: finalReport.missingConcepts || [],
       recommendedTopicsToPractice: finalReport.recommendedTopicsToPractice || [],
       suggestedNextSteps: finalReport.suggestedNextSteps || [],
+      studyRoadmap: finalReport.studyRoadmap || [],
+      disclaimer: finalReport.disclaimer || '',
+      provider: finalReport.provider || '',
+      isSimulated: Boolean(finalReport.isSimulated),
       generatedAt: new Date(),
     };
 
@@ -493,11 +502,15 @@ const finishInterview = async (req, res, next) => {
 
     await interview.save();
 
-    // Increment user preparation stats
+    // Increment user preparation stats (only award score if genuine evaluation occurred)
+    const prepScoreInc = (typeof finalReport.overallScore === 'number' && !isNaN(finalReport.overallScore))
+      ? Math.round(finalReport.overallScore / 2)
+      : 0;
+
     await User.findByIdAndUpdate(req.user._id, {
       $inc: {
         'stats.mockInterviewsCompleted': 1,
-        'stats.prepScore': Math.round(finalReport.overallScore / 2),
+        'stats.prepScore': prepScoreInc,
       },
       $set: { 'stats.lastActiveDate': new Date() },
     });
@@ -623,7 +636,21 @@ const abandonActiveInterview = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Get AI Interview Engine Status (Live Gemini vs Simulated AI)
+ * @route   GET /api/interview/status
+ * @access  Private
+ */
+const getInterviewStatus = async (req, res) => {
+  const status = aiInterviewService.getAIStatus();
+  return res.status(200).json({
+    success: true,
+    ...status,
+  });
+};
+
 module.exports = {
+  getInterviewStatus,
   startInterview,
   getActiveInterview,
   getInterviewById,

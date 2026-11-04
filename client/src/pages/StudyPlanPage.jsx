@@ -5,13 +5,10 @@ import {
   Circle,
   Plus,
   Trash2,
-  RefreshCw,
   Sparkles,
   Clock,
   Target,
-  AlertCircle,
   Sliders,
-  ChevronDown,
   Filter,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -33,14 +30,16 @@ const ALL_CATEGORIES = [
   'DSA',
   'Java',
   'Python',
+  'C++',
   'JavaScript',
-  'React',
   'SQL',
   'DBMS',
   'Operating Systems',
   'Computer Networks',
   'OOP',
-  'HR',
+  'Quantitative Aptitude',
+  'Logical Reasoning',
+  'Verbal Ability',
 ];
 
 const StudyPlanPage = () => {
@@ -59,7 +58,7 @@ const StudyPlanPage = () => {
     targetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     studyHoursPerWeek: 10,
     preferredDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Sat'],
-    targetCategories: ['DSA', 'React', 'SQL'],
+    targetCategories: ['DSA', 'Python', 'SQL'],
   });
 
   // Form state for adding custom task
@@ -143,7 +142,6 @@ const StudyPlanPage = () => {
 
   const handleToggleTask = async (taskId) => {
     try {
-      // Optimistic update
       setPlan((prev) => {
         if (!prev) return prev;
         const updatedTasks = prev.tasks.map((t) =>
@@ -184,7 +182,7 @@ const StudyPlanPage = () => {
         setNewTask({
           title: '',
           description: '',
-          category: 'Algorithms',
+          category: 'DSA',
           day: 'Mon',
           estimatedMinutes: 30,
           week: 1,
@@ -236,20 +234,20 @@ const StudyPlanPage = () => {
   }
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-12 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <div className="flex items-center space-x-2">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               Personalized Study Plan
             </h1>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-semibold flex items-center gap-1">
-              <Sparkles className="w-3 h-3" /> Adaptive Schedule
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-emerald-600" /> Adaptive Schedule
             </span>
           </div>
-          <p className="text-sm text-slate-400 mt-1">
-            Tailored preparation curriculum aligned with your interview targets and topic mastery.
+          <p className="text-sm text-slate-500 mt-1">
+            Tailored preparation curriculum aligned with your target companies, weak topics, and timeline.
           </p>
         </div>
 
@@ -261,15 +259,16 @@ const StudyPlanPage = () => {
               onClick={() => setShowConfigModal(true)}
               className="flex items-center gap-1.5"
             >
-              <Sliders className="w-4 h-4 text-brand-400" />
+              <Sliders className="w-4 h-4 text-sky-600" />
               <span>Regenerate Plan</span>
             </Button>
             <Button
               size="sm"
+              variant="primary"
               onClick={() => setShowAddTaskModal(true)}
               className="flex items-center gap-1.5"
             >
-              <Plus className="w-4 h-4 text-white" />
+              <Plus className="w-4 h-4" />
               <span>Add Task</span>
             </Button>
           </div>
@@ -280,21 +279,21 @@ const StudyPlanPage = () => {
 
       {/* If No Plan Exists: Initial Setup Onboarding Form */}
       {!plan ? (
-        <Card className="max-w-2xl mx-auto p-6 sm:p-8 bg-slate-900/80 border-slate-800">
+        <Card className="max-w-2xl mx-auto p-6 sm:p-8 bg-white border-slate-200 shadow-xs">
           <div className="text-center mb-6">
-            <div className="w-12 h-12 rounded-xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center mx-auto text-brand-400 mb-3">
+            <div className="w-12 h-12 rounded-xl bg-sky-50 border border-sky-200 flex items-center justify-center mx-auto text-sky-600 mb-3">
               <Calendar className="w-6 h-6" />
             </div>
-            <h2 className="text-xl font-bold text-white">Create Your Preparation Roadmap</h2>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              PrepAI analyzes your topic strengths and target date to create a balanced schedule.
+            <h2 className="text-xl font-bold text-slate-900">Create Your Preparation Roadmap</h2>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              PrepAI analyzes your topic strengths and target date to build a prioritized, achievable schedule.
             </p>
           </div>
 
           <form onSubmit={handleSavePlan} className="space-y-6">
             <Input
               label="Preparation Goal"
-              placeholder="e.g. SDE II at Meta, Frontend Specialist, Full Stack Engineer"
+              placeholder="e.g. SDE at Top Product Company, Backend Lead, Full Stack Specialist"
               value={formData.goal}
               onChange={(e) => setFormData({ ...formData, goal: e.target.value })}
               required
@@ -302,7 +301,7 @@ const StudyPlanPage = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Target Interview Date
                 </label>
                 <input
@@ -311,12 +310,12 @@ const StudyPlanPage = () => {
                   value={formData.targetDate}
                   onChange={(e) => setFormData({ ...formData, targetDate: e.target.value })}
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-500"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Weekly Study Hours ({formData.studyHoursPerWeek} hrs/week)
                 </label>
                 <input
@@ -328,14 +327,14 @@ const StudyPlanPage = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, studyHoursPerWeek: Number(e.target.value) })
                   }
-                  className="w-full accent-brand-500 mt-2"
+                  className="w-full accent-sky-600 mt-2"
                 />
               </div>
             </div>
 
             {/* Preferred Study Days */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-2">
+              <label className="block text-xs font-semibold text-slate-700 mb-2">
                 Preferred Study Days
               </label>
               <div className="flex flex-wrap gap-2">
@@ -346,10 +345,10 @@ const StudyPlanPage = () => {
                       type="button"
                       key={day}
                       onClick={() => handleToggleDay(day)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                         selected
-                          ? 'bg-brand-600 text-white shadow-sm shadow-brand-500/30'
-                          : 'bg-slate-950 text-slate-400 border border-slate-800 hover:text-slate-200'
+                          ? 'bg-sky-500 text-white shadow-xs'
+                          : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
                       }`}
                     >
                       {day}
@@ -361,7 +360,7 @@ const StudyPlanPage = () => {
 
             {/* Target Topics */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-2">
+              <label className="block text-xs font-semibold text-slate-700 mb-2">
                 Target Topics & Categories
               </label>
               <div className="flex flex-wrap gap-2">
@@ -372,10 +371,10 @@ const StudyPlanPage = () => {
                       type="button"
                       key={cat}
                       onClick={() => handleToggleCategory(cat)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                         selected
-                          ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/30'
-                          : 'bg-slate-950 text-slate-400 border border-slate-800 hover:text-slate-200'
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
                       }`}
                     >
                       {cat}
@@ -394,49 +393,49 @@ const StudyPlanPage = () => {
         /* Plan View */
         <div className="space-y-6">
           {/* Plan Overview Banner */}
-          <Card className="border-slate-800/80 bg-slate-900/60 p-6">
+          <Card className="border-slate-200 bg-white p-6 shadow-xs">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-300 font-semibold">
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-sky-50 border border-sky-200 text-sky-700 font-bold">
                     {plan.generationSource === 'ai' ? '🤖 AI Structured' : '⚡ Performance-Optimized'}
                   </span>
                   {daysRemaining !== null && (
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 font-semibold">
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 font-bold">
                       {daysRemaining} days remaining
                     </span>
                   )}
                 </div>
-                <h2 className="text-xl font-bold text-white">{plan.goal}</h2>
-                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 pt-1">
+                <h2 className="text-xl font-extrabold text-slate-900">{plan.goal}</h2>
+                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-1">
                   <span className="flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-slate-500" />
+                    <Clock className="w-3.5 h-3.5 text-slate-400" />
                     {plan.studyHoursPerWeek} hrs/week
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
                     Days: {(plan.preferredDays || []).join(', ')}
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <Target className="w-3.5 h-3.5 text-slate-500" />
+                    <Target className="w-3.5 h-3.5 text-slate-400" />
                     Topics: {(plan.targetCategories || []).join(', ')}
                   </span>
                 </div>
               </div>
 
               {/* Progress Dial */}
-              <div className="flex items-center space-x-6 shrink-0 lg:border-l lg:border-slate-800 lg:pl-6">
+              <div className="flex items-center space-x-6 shrink-0 lg:border-l lg:border-slate-100 lg:pl-6">
                 <div>
                   <div className="flex items-baseline space-x-2">
-                    <span className="text-3xl font-black text-white">{plan.progress}%</span>
+                    <span className="text-3xl font-black text-slate-900">{plan.progress}%</span>
                     <span className="text-xs text-slate-400">completed</span>
                   </div>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-slate-500 mt-1">
                     {plan.completedTasks} of {plan.totalTasks} tasks done
                   </p>
-                  <div className="w-36 bg-slate-800 h-2 rounded-full mt-2 overflow-hidden">
+                  <div className="w-36 bg-slate-100 h-2 rounded-full mt-2 overflow-hidden border border-slate-200">
                     <div
-                      className="bg-brand-500 h-full rounded-full transition-all duration-300"
+                      className="bg-sky-500 h-full rounded-full transition-all duration-300"
                       style={{ width: `${plan.progress}%` }}
                     />
                   </div>
@@ -446,17 +445,17 @@ const StudyPlanPage = () => {
           </Card>
 
           {/* Filter Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/40 p-3 rounded-xl border border-slate-800/80">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50 p-3 rounded-xl border border-slate-200">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold text-slate-400 mr-2 flex items-center gap-1">
+              <span className="text-xs font-bold text-slate-500 mr-2 flex items-center gap-1">
                 <Filter className="w-3.5 h-3.5" /> Filter by Week:
               </span>
               <button
                 onClick={() => setFilterWeek('all')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   filterWeek === 'all'
-                    ? 'bg-brand-600 text-white'
-                    : 'bg-slate-800/60 text-slate-400 hover:text-white'
+                    ? 'bg-sky-500 text-white shadow-xs'
+                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
                 }`}
               >
                 All Weeks
@@ -465,10 +464,10 @@ const StudyPlanPage = () => {
                 <button
                   key={w}
                   onClick={() => setFilterWeek(w.toString())}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     filterWeek === w.toString()
-                      ? 'bg-brand-600 text-white'
-                      : 'bg-slate-800/60 text-slate-400 hover:text-white'
+                      ? 'bg-sky-500 text-white shadow-xs'
+                      : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
                   }`}
                 >
                   Week {w}
@@ -479,30 +478,30 @@ const StudyPlanPage = () => {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setFilterStatus('all')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   filterStatus === 'all'
-                    ? 'bg-slate-700 text-white'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-slate-800 text-white'
+                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
                 }`}
               >
                 All
               </button>
               <button
                 onClick={() => setFilterStatus('pending')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   filterStatus === 'pending'
-                    ? 'bg-amber-600/30 text-amber-300 border border-amber-500/30'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-amber-500 text-white shadow-xs'
+                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
                 }`}
               >
                 Pending
               </button>
               <button
                 onClick={() => setFilterStatus('completed')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   filterStatus === 'completed'
-                    ? 'bg-emerald-600/30 text-emerald-300 border border-emerald-500/30'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
                 }`}
               >
                 Completed
@@ -512,10 +511,10 @@ const StudyPlanPage = () => {
 
           {/* Task Checklist */}
           {filteredTasks.length === 0 ? (
-            <div className="py-12 text-center border border-dashed border-slate-800 rounded-xl bg-slate-900/30">
-              <CheckCircle2 className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-              <p className="text-sm font-semibold text-slate-300">No tasks match your filter</p>
-              <p className="text-xs text-slate-500 mt-1">Adjust your week or status filters above.</p>
+            <div className="py-12 text-center border border-dashed border-slate-200 rounded-xl bg-white">
+              <CheckCircle2 className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+              <p className="text-sm font-bold text-slate-700">No tasks match your filter</p>
+              <p className="text-xs text-slate-400 mt-1">Adjust your week or status filters above.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -524,20 +523,20 @@ const StudyPlanPage = () => {
                   key={task._id}
                   className={`flex items-start justify-between p-4 rounded-xl border transition-all ${
                     task.isCompleted
-                      ? 'bg-slate-950/40 border-slate-800/60 opacity-75'
-                      : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
+                      ? 'bg-slate-50 border-slate-200 opacity-80'
+                      : 'bg-white border-slate-200 hover:border-sky-300 shadow-xs'
                   }`}
                 >
                   <div className="flex items-start space-x-3.5 flex-1 min-w-0 pr-4">
                     <button
                       type="button"
                       onClick={() => handleToggleTask(task._id)}
-                      className={`mt-0.5 shrink-0 transition-transform hover:scale-110 ${
-                        task.isCompleted ? 'text-emerald-400' : 'text-slate-500 hover:text-slate-300'
+                      className={`mt-0.5 shrink-0 transition-transform hover:scale-110 cursor-pointer ${
+                        task.isCompleted ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'
                       }`}
                     >
                       {task.isCompleted ? (
-                        <CheckCircle2 className="w-5 h-5 fill-emerald-500/20" />
+                        <CheckCircle2 className="w-5 h-5 fill-emerald-100 text-emerald-600" />
                       ) : (
                         <Circle className="w-5 h-5" />
                       )}
@@ -547,19 +546,19 @@ const StudyPlanPage = () => {
                       <div className="flex flex-wrap items-center gap-2">
                         <span
                           className={`text-sm font-bold ${
-                            task.isCompleted ? 'line-through text-slate-400' : 'text-white'
+                            task.isCompleted ? 'line-through text-slate-400' : 'text-slate-900'
                           }`}
                         >
                           {task.title}
                         </span>
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-brand-500/10 text-brand-300 border border-brand-500/20">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200">
                           {task.category}
                         </span>
-                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
                           Week {task.week} • {task.day}
                         </span>
-                        <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-slate-500" />
+                        <span className="text-[10px] text-slate-500 flex items-center gap-1 font-medium">
+                          <Clock className="w-3 h-3 text-slate-400" />
                           {task.estimatedMinutes}m
                         </span>
                       </div>
@@ -567,7 +566,7 @@ const StudyPlanPage = () => {
                       {task.description && (
                         <p
                           className={`text-xs ${
-                            task.isCompleted ? 'text-slate-500' : 'text-slate-400'
+                            task.isCompleted ? 'text-slate-400' : 'text-slate-600'
                           } leading-relaxed`}
                         >
                           {task.description}
@@ -579,7 +578,7 @@ const StudyPlanPage = () => {
                   <button
                     type="button"
                     onClick={() => handleDeleteTask(task._id)}
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-slate-800 transition-colors shrink-0"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors shrink-0 cursor-pointer"
                     title="Delete task"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -593,16 +592,16 @@ const StudyPlanPage = () => {
 
       {/* Regenerate Plan Modal */}
       {showConfigModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <Card className="max-w-xl w-full p-6 bg-slate-900 border-slate-800 space-y-6">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Sliders className="w-5 h-5 text-brand-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <Card className="max-w-xl w-full p-6 bg-white border-slate-200 space-y-6 shadow-xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <Sliders className="w-5 h-5 text-sky-600" />
                 <span>Update Preparation Schedule</span>
               </h3>
               <button
                 onClick={() => setShowConfigModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-700 cursor-pointer"
               >
                 ✕
               </button>
@@ -618,7 +617,7 @@ const StudyPlanPage = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Target Date
                   </label>
                   <input
@@ -627,12 +626,12 @@ const StudyPlanPage = () => {
                     value={formData.targetDate}
                     onChange={(e) => setFormData({ ...formData, targetDate: e.target.value })}
                     required
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-500"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Weekly Hours ({formData.studyHoursPerWeek}h)
                   </label>
                   <input
@@ -643,13 +642,13 @@ const StudyPlanPage = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, studyHoursPerWeek: Number(e.target.value) })
                     }
-                    className="w-full accent-brand-500 mt-2"
+                    className="w-full accent-sky-600 mt-2"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Study Days
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -660,8 +659,8 @@ const StudyPlanPage = () => {
                         type="button"
                         key={day}
                         onClick={() => handleToggleDay(day)}
-                        className={`px-2.5 py-1 rounded text-xs font-semibold ${
-                          selected ? 'bg-brand-600 text-white' : 'bg-slate-950 text-slate-400 border border-slate-800'
+                        className={`px-2.5 py-1 rounded text-xs font-bold cursor-pointer ${
+                          selected ? 'bg-sky-500 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'
                         }`}
                       >
                         {day}
@@ -672,7 +671,7 @@ const StudyPlanPage = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Target Topics
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -683,8 +682,8 @@ const StudyPlanPage = () => {
                         type="button"
                         key={cat}
                         onClick={() => handleToggleCategory(cat)}
-                        className={`px-2.5 py-1 rounded text-xs font-semibold ${
-                          selected ? 'bg-emerald-600 text-white' : 'bg-slate-950 text-slate-400 border border-slate-800'
+                        className={`px-2.5 py-1 rounded text-xs font-bold cursor-pointer ${
+                          selected ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'
                         }`}
                       >
                         {cat}
@@ -694,7 +693,7 @@ const StudyPlanPage = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-3 border-t border-slate-800">
+              <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
                 <Button
                   type="button"
                   variant="ghost"
@@ -713,16 +712,16 @@ const StudyPlanPage = () => {
 
       {/* Add Custom Task Modal */}
       {showAddTaskModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <Card className="max-w-md w-full p-6 bg-slate-900 border-slate-800 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Plus className="w-5 h-5 text-emerald-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <Card className="max-w-md w-full p-6 bg-white border-slate-200 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <Plus className="w-5 h-5 text-emerald-600" />
                 <span>Add Custom Task</span>
               </h3>
               <button
                 onClick={() => setShowAddTaskModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-700 cursor-pointer"
               >
                 ✕
               </button>
@@ -738,7 +737,7 @@ const StudyPlanPage = () => {
               />
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Description (Optional)
                 </label>
                 <textarea
@@ -746,19 +745,19 @@ const StudyPlanPage = () => {
                   value={newTask.description}
                   onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
                   placeholder="Notes, references, or specific questions to solve..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500"
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Category
                   </label>
                   <select
                     value={newTask.category}
                     onChange={(e) => setNewTask({ ...newTask, category: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer"
                   >
                     {ALL_CATEGORIES.map((c) => (
                       <option key={c} value={c}>
@@ -769,13 +768,13 @@ const StudyPlanPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Scheduled Day
                   </label>
                   <select
                     value={newTask.day}
                     onChange={(e) => setNewTask({ ...newTask, day: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer"
                   >
                     {ALL_DAYS.map((d) => (
                       <option key={d} value={d}>
@@ -788,7 +787,7 @@ const StudyPlanPage = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Estimated (Minutes)
                   </label>
                   <input
@@ -799,24 +798,24 @@ const StudyPlanPage = () => {
                     onChange={(e) =>
                       setNewTask({ ...newTask, estimatedMinutes: Number(e.target.value) })
                     }
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Week</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Week</label>
                   <input
                     type="number"
                     min="1"
                     max="12"
                     value={newTask.week}
                     onChange={(e) => setNewTask({ ...newTask, week: Number(e.target.value) })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-3 border-t border-slate-800">
+              <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
                 <Button
                   type="button"
                   variant="ghost"

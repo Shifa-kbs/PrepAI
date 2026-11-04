@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: prepai-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-1.5-flash
+      - key: JUDGE0_API_KEY
+        sync: false
+      - key: JUDGE0_API_URL
+        sync: false
+      - key: JUDGE0_API_HOST
+        value: judge0-ce.p.rapidapi.com
+      - key: ENABLE_LOCAL_UNSAFE_RUNNER
+        value: false
+

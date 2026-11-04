@@ -51,24 +51,24 @@ const ResetPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 selection:bg-brand-500 selection:text-white">
+    <div className="min-h-screen bg-slate-50/50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 selection:bg-sky-500 selection:text-white">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <Link to="/" className="inline-flex items-center space-x-2 group mb-6">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center text-white shadow-lg shadow-brand-600/30 group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-sky-500 flex items-center justify-center text-white shadow-md shadow-sky-500/20 group-hover:scale-105 transition-transform">
             <Sparkles className="w-6 h-6" />
           </div>
-          <span className="text-2xl font-extrabold text-white">
-            Prep<span className="text-brand-500">AI</span>
+          <span className="text-2xl font-extrabold text-slate-900">
+            Prep<span className="text-sky-500">AI</span>
           </span>
         </Link>
-        <h2 className="text-2xl font-bold tracking-tight text-slate-100">Set New Password</h2>
-        <p className="mt-1.5 text-xs text-slate-400">
+        <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">Set New Password</h2>
+        <p className="mt-1.5 text-xs text-slate-500">
           Enter a secure new password for your account
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
-        <Card>
+        <Card className="border border-slate-200/80 shadow-md">
           {error && <ErrorMessage message={error} className="mb-4" />}
 
           <form onSubmit={handleSubmit} className="space-y-4">

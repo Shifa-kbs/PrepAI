@@ -99,7 +99,7 @@ const startSession = async (req, res, next) => {
       }
       parsedCount = num;
     }
-    const count = Math.min(50, parsedCount);
+    const count = Math.min(150, parsedCount);
 
     const {
       topic,
@@ -172,14 +172,72 @@ const startSession = async (req, res, next) => {
     }
 
     // Fetch candidate matching questions (excluding solutions)
-    const matchingQuestions = await Question.find(query)
+    let matchingQuestions = await Question.find(query)
       .select('-correctAnswerIndex -sampleAnswer -explanation')
       .lean();
 
+    const relaxedFiltersApplied = [];
+
+    // Fallback relaxation step 1: If database has very few questions, ensure seeded
     if (!matchingQuestions || matchingQuestions.length === 0) {
-      return res.status(400).json({
+      const totalQCount = await Question.countDocuments();
+      if (totalQCount < 50) {
+        try {
+          const { seedDatabase } = require('../data/seedData');
+          await seedDatabase({ skipDisconnect: true });
+          matchingQuestions = await Question.find(query)
+            .select('-correctAnswerIndex -sampleAnswer -explanation')
+            .lean();
+        } catch (seedErr) {
+          console.warn('Auto-seed fallback error in practiceController:', seedErr.message);
+        }
+      }
+    }
+
+    // Fallback relaxation step 2: Relax topic if specified
+    if ((!matchingQuestions || matchingQuestions.length === 0) && query.topic) {
+      const relaxedQuery = { ...query };
+      delete relaxedQuery.topic;
+      const fallback = await Question.find(relaxedQuery)
+        .select('-correctAnswerIndex -sampleAnswer -explanation')
+        .lean();
+      if (fallback && fallback.length > 0) {
+        matchingQuestions = fallback;
+        relaxedFiltersApplied.push(`expanded from topic "${topic}" to all topics in ${category}`);
+      }
+    }
+
+    // Fallback relaxation step 3: Relax difficulty if specified
+    if ((!matchingQuestions || matchingQuestions.length === 0) && query.difficulty) {
+      const relaxedQuery = { ...query };
+      delete relaxedQuery.difficulty;
+      delete relaxedQuery.topic;
+      const fallback = await Question.find(relaxedQuery)
+        .select('-correctAnswerIndex -sampleAnswer -explanation')
+        .lean();
+      if (fallback && fallback.length > 0) {
+        matchingQuestions = fallback;
+        relaxedFiltersApplied.push(`adjusted difficulty from "${difficulty}" to all available difficulties in ${category}`);
+      }
+    }
+
+    // Fallback relaxation step 4: For aptitude tests, fallback to all aptitude domains
+    if ((!matchingQuestions || matchingQuestions.length === 0) && (isFullAptitude || moduleType === 'aptitude')) {
+      const fallback = await Question.find({
+        category: { $in: ['Quantitative Aptitude', 'Logical Reasoning', 'Verbal Ability'] },
+      })
+        .select('-correctAnswerIndex -sampleAnswer -explanation')
+        .lean();
+      if (fallback && fallback.length > 0) {
+        matchingQuestions = fallback;
+        relaxedFiltersApplied.push('included questions across all Aptitude sections');
+      }
+    }
+
+    if (!matchingQuestions || matchingQuestions.length === 0) {
+      return res.status(404).json({
         success: false,
-        message: 'No questions found matching the selected category and difficulty criteria.',
+        message: `No questions found matching ${category || 'the selected criteria'}. Please select another domain or difficulty.`,
       });
     }
 
@@ -344,9 +402,12 @@ const startSession = async (req, res, next) => {
     const sessionData = session.toObject();
     sessionData.questions = selectedQuestions.map((q) => sanitizeQuestion(q));
 
-    const responseMessage = isPartial
-      ? `Requested ${count} questions, but only ${availableCount} eligible question${availableCount > 1 ? 's were' : ' was'} found for ${sessionCategory}. Started session with all ${availableCount} available question${availableCount > 1 ? 's' : ''}.`
-      : 'Practice session started successfully';
+    let responseMessage = 'Practice session started successfully';
+    if (relaxedFiltersApplied.length > 0) {
+      responseMessage = `Note: We ${relaxedFiltersApplied.join(' and ')} to provide questions for your session.`;
+    } else if (isPartial) {
+      responseMessage = `Requested ${count} questions, but only ${availableCount} eligible question${availableCount > 1 ? 's were' : ' was'} found for ${sessionCategory}. Started session with all ${availableCount} available question${availableCount > 1 ? 's' : ''}.`;
+    }
 
     return res.status(201).json({
       success: true,
@@ -354,6 +415,7 @@ const startSession = async (req, res, next) => {
       isPartial,
       requestedCount: count,
       availableCount,
+      relaxedFiltersApplied,
       message: responseMessage,
       session: sessionData,
     });
@@ -546,7 +608,7 @@ const submitSessionAnswer = async (req, res, next) => {
       session.mode === 'assessment' ||
       session.mode === 'section-test' ||
       session.mode === 'full-test' ||
-      isTimed;
+      (session.moduleType === 'aptitude' && isTimed);
 
     // Strict server-side timer validation with 15-second network buffer
     if (isTimed) {
@@ -588,6 +650,7 @@ const submitSessionAnswer = async (req, res, next) => {
 
     const hasOptions = Array.isArray(question.options) && question.options.length > 0;
     let isCorrect = false;
+    let executionResult = null;
 
     if (hasOptions) {
       if (
@@ -602,6 +665,56 @@ const submitSessionAnswer = async (req, res, next) => {
         });
       }
       isCorrect = selectedAnswerIndex === question.correctAnswerIndex;
+    } else if (question.type === 'coding' || req.body.code) {
+      const submittedCode = req.body.code || userAnswer || '';
+      const submittedLang = req.body.language || 'javascript';
+      if (submittedCode.trim()) {
+        let testCases = Array.isArray(question.testCases) && question.testCases.length > 0
+          ? question.testCases
+          : [];
+
+        // If testCases is empty on the DB document, lookup static questions
+        if (testCases.length === 0) {
+          try {
+            const { allQuestions } = require('../data/questions');
+            const staticQ = allQuestions.find(
+              (q) => q.slug === question.slug || q.title === question.title
+            );
+            if (staticQ && Array.isArray(staticQ.testCases) && staticQ.testCases.length > 0) {
+              testCases = staticQ.testCases;
+            }
+          } catch {}
+        }
+
+        // Fallback to examples if no explicit test cases defined
+        if (testCases.length === 0 && Array.isArray(question.examples) && question.examples.length > 0) {
+          testCases = question.examples.map((ex) => ({
+            input: ex.input || '',
+            expectedOutput: ex.output || '',
+            isHidden: false,
+          }));
+        }
+
+        const { executeCode } = require('../services/codeExecutionService');
+        executionResult = await executeCode({
+          language: submittedLang,
+          code: submittedCode,
+          testCases,
+        });
+
+        if (executionResult && executionResult.isUnavailable) {
+          return res.status(503).json({
+            success: false,
+            isUnavailable: true,
+            message: executionResult.summary,
+            error: executionResult.error,
+          });
+        }
+
+        isCorrect = Boolean(executionResult && executionResult.allPassed && executionResult.totalTests > 0);
+      } else {
+        isCorrect = false;
+      }
     } else {
       isCorrect = true; // Conceptual self-evaluation
     }
@@ -617,6 +730,8 @@ const submitSessionAnswer = async (req, res, next) => {
       question: question._id,
       selectedOptionIndex: hasOptions ? selectedAnswerIndex : undefined,
       userAnswer: typeof userAnswer === 'string' ? userAnswer : '',
+      language: req.body.language || 'javascript',
+      executionResult: executionResult || undefined,
       isCorrect,
       status: isCorrect ? 'correct' : 'wrong',
       timeSpentSeconds: parsedTime,
@@ -714,6 +829,7 @@ const submitSessionAnswer = async (req, res, next) => {
       success: true,
       isAssessment: false,
       isCorrect,
+      executionResult,
       selectedAnswerIndex,
       correctAnswerIndex: question.correctAnswerIndex,
       explanation: question.explanation || '',
@@ -1033,9 +1149,162 @@ const getAptitudeStats = async (req, res, next) => {
       success: true,
       sections,
       totalAptitudeQuestions: questions.length,
+      data: {
+        sections,
+        totalAptitudeQuestions: questions.length,
+      },
     });
   } catch (error) {
     return next(error);
+  }
+};
+
+/**
+ * @desc    Execute code in sandboxed environment against test cases
+ * @route   POST /api/practice/run-code
+ * @access  Private
+ */
+const executeCodingChallenge = async (req, res, next) => {
+  try {
+    const { language = 'javascript', code = '', testCases = [], questionId } = req.body;
+
+    if (!code || typeof code !== 'string' || !code.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Source code is required to execute test cases.',
+      });
+    }
+
+    let casesToRun = Array.isArray(testCases) ? testCases : [];
+    if (casesToRun.length === 0 && questionId) {
+      const Question = require('../models/Question');
+      const q = await Question.findById(questionId);
+      if (q && Array.isArray(q.testCases) && q.testCases.length > 0) {
+        casesToRun = q.testCases;
+      }
+    }
+
+    const { executeCode } = require('../services/codeExecutionService');
+    const result = await executeCode({ language, code, testCases: casesToRun });
+
+    if (result && result.isUnavailable) {
+      return res.status(503).json({
+        success: false,
+        isUnavailable: true,
+        message: result.summary,
+        ...result,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message || 'Code execution failed',
+    });
+  }
+};
+
+/**
+ * @desc    Get live available question count for category/filters before test start
+ * @route   GET /api/practice/availability
+ * @access  Private
+ */
+const getQuestionAvailability = async (req, res, next) => {
+  try {
+    const { category, difficulty, topic, type, mode, section } = req.query;
+    const isFullAptitude =
+      category === 'Full Aptitude Test' ||
+      category === 'Aptitude' ||
+      section === 'Full Aptitude Test';
+
+    const query = {};
+    if (isFullAptitude) {
+      query.category = { $in: ['Quantitative Aptitude', 'Logical Reasoning', 'Verbal Ability'] };
+    } else if (mode !== 'mixed' && category && category !== 'All' && category !== 'all' && category !== 'Mixed Topics') {
+      query.category = category;
+    }
+    if (difficulty && difficulty !== 'All' && difficulty !== 'all') {
+      query.difficulty = difficulty;
+    }
+    if (topic && topic !== 'All' && topic !== 'all') {
+      query.topic = topic;
+    }
+    if (type && type !== 'All' && type !== 'all') {
+      query.type = type;
+    }
+
+    const availableCount = await Question.countDocuments(query);
+    return res.status(200).json({
+      success: true,
+      availableCount,
+      query,
+    });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+/**
+ * @desc    Save completed learning studio topic test results to database
+ * @route   POST /api/practice/learning-result
+ * @access  Private
+ */
+const saveLearningAssessment = async (req, res, next) => {
+  try {
+    const {
+      topicId,
+      topicTitle,
+      subjectName,
+      totalQuestions = 5,
+      correctCount = 0,
+      incorrectCount = 0,
+      score = 0,
+      timeSpentSeconds = 0,
+      answers = {},
+    } = req.body;
+
+    const session = new PracticeSession({
+      user: req.user._id,
+      mode: 'topic',
+      moduleType: 'learning',
+      section: topicTitle || topicId || 'Learning Topic Test',
+      category: subjectName || 'Aptitude',
+      difficulty: 'Medium',
+      totalQuestions: Number(totalQuestions) || 5,
+      requestedQuestions: Number(totalQuestions) || 5,
+      timeLimitMinutes: 10,
+      status: 'completed',
+      questions: [],
+      answers: [],
+      score: Number(score) || 0,
+      accuracy: Number(score) || 0,
+      timeTakenSeconds: Number(timeSpentSeconds) || 0,
+      startedAt: new Date(Date.now() - (Number(timeSpentSeconds) || 0) * 1000),
+      completedAt: new Date(),
+    });
+
+    await session.save();
+
+    // Increment user stats
+    await User.findByIdAndUpdate(req.user._id, {
+      $inc: {
+        'stats.questionsSolved': Number(correctCount) || 0,
+        'stats.prepScore': Math.round((Number(score) || 0) / 4),
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Learning assessment result saved to profile and analytics',
+      sessionId: session._id,
+      session,
+    });
+  } catch (err) {
+    return next(err);
   }
 };
 
@@ -1050,4 +1319,7 @@ module.exports = {
   abandonActiveSession,
   getAptitudeStats,
   computeSessionSummary,
+  executeCodingChallenge,
+  getQuestionAvailability,
+  saveLearningAssessment,
 };

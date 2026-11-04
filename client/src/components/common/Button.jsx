@@ -13,14 +13,14 @@ const Button = ({
   icon: Icon,
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm';
+  const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm';
 
   const variants = {
-    primary: 'bg-brand-600 hover:bg-brand-500 text-white focus:ring-brand-500 border border-brand-500/30 shadow-brand-900/30',
-    secondary: 'bg-slate-800 hover:bg-slate-700 text-slate-100 focus:ring-slate-500 border border-slate-700',
-    outline: 'bg-transparent border border-slate-700 hover:bg-slate-800 text-slate-300 hover:text-white focus:ring-slate-500',
-    danger: 'bg-rose-600 hover:bg-rose-500 text-white focus:ring-rose-500 border border-rose-500/30',
-    ghost: 'bg-transparent hover:bg-slate-800/60 text-slate-300 hover:text-white focus:ring-slate-500 shadow-none',
+    primary: 'bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-white focus:ring-sky-400 border border-sky-500 shadow-sm shadow-sky-200/50',
+    secondary: 'bg-sky-50 hover:bg-sky-100 text-sky-800 focus:ring-sky-300 border border-sky-200',
+    outline: 'bg-white border border-sky-200 hover:bg-sky-50 hover:border-sky-300 text-sky-700 hover:text-sky-900 focus:ring-sky-300',
+    danger: 'bg-rose-500 hover:bg-rose-600 text-white focus:ring-rose-400 border border-rose-500',
+    ghost: 'bg-transparent hover:bg-sky-50 text-slate-600 hover:text-sky-700 focus:ring-sky-300 shadow-none',
   };
 
   const sizes = {

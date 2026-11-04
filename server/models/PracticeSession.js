@@ -14,7 +14,7 @@ const PracticeSessionSchema = new mongoose.Schema({
   },
   moduleType: {
     type: String,
-    enum: ['technical', 'aptitude', 'company-mock'],
+    enum: ['technical', 'aptitude', 'company-mock', 'learning'],
     default: 'technical',
     index: true,
   },
@@ -68,6 +68,14 @@ const PracticeSessionSchema = new mongoose.Schema({
       userAnswer: {
         type: String,
         default: '',
+      },
+      language: {
+        type: String,
+        default: 'javascript',
+      },
+      executionResult: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null,
       },
       isCorrect: {
         type: Boolean,

@@ -40,18 +40,24 @@ const registerUser = async (req, res, next) => {
     // Generate JWT token
     const token = generateToken(user._id);
 
+    const userResponse = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profile: user.profile,
+      stats: user.stats,
+      bookmarks: user.bookmarks,
+      createdAt: user.createdAt,
+    };
+
     return res.status(201).json({
       success: true,
       token,
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        profile: user.profile,
-        stats: user.stats,
-        bookmarks: user.bookmarks,
-        createdAt: user.createdAt,
+      user: userResponse,
+      data: {
+        token,
+        user: userResponse,
       },
     });
   } catch (error) {
@@ -100,18 +106,24 @@ const loginUser = async (req, res, next) => {
     // Generate token
     const token = generateToken(user._id);
 
+    const userResponse = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profile: user.profile,
+      stats: user.stats,
+      bookmarks: user.bookmarks,
+      createdAt: user.createdAt,
+    };
+
     return res.status(200).json({
       success: true,
       token,
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        profile: user.profile,
-        stats: user.stats,
-        bookmarks: user.bookmarks,
-        createdAt: user.createdAt,
+      user: userResponse,
+      data: {
+        token,
+        user: userResponse,
       },
     });
   } catch (error) {
@@ -168,8 +180,7 @@ const forgotPassword = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-      message: 'Password reset link generated and logged successfully',
-      resetToken, // Returned for dev testing convenience
+      message: 'Password reset link has been dispatched to your email address.',
     });
   } catch (error) {
     next(error);
@@ -225,10 +236,69 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
+// @desc    Update current user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+const updateProfile = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const { name, college, degree, graduationYear, skills, bio } = req.body;
+
+    if (name && typeof name === 'string' && name.trim()) {
+      user.name = name.trim();
+    }
+
+    if (!user.profile) {
+      user.profile = {};
+    }
+
+    if (college !== undefined) user.profile.college = String(college || '').trim();
+    if (degree !== undefined) user.profile.degree = String(degree || '').trim();
+    if (graduationYear !== undefined && graduationYear !== null && graduationYear !== '') {
+      user.profile.graduationYear = Number(graduationYear);
+    }
+    if (skills !== undefined) {
+      if (Array.isArray(skills)) {
+        user.profile.skills = skills.map((s) => String(s).trim()).filter(Boolean);
+      } else if (typeof skills === 'string') {
+        user.profile.skills = skills.split(',').map((s) => s.trim()).filter(Boolean);
+      }
+    }
+    if (bio !== undefined) user.profile.bio = String(bio || '').trim();
+
+    await user.save();
+
+    const userResponse = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profile: user.profile,
+      stats: user.stats,
+      bookmarks: user.bookmarks,
+      createdAt: user.createdAt,
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: userResponse,
+      data: { user: userResponse },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   getMe,
+  updateProfile,
   forgotPassword,
   resetPassword,
 };

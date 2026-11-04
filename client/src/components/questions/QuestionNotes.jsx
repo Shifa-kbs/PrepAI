@@ -34,16 +34,16 @@ const QuestionNotes = ({ questionId, initialNotes = '', onNotesSaved }) => {
   const hasChanged = (notes || '').trim() !== (initialNotes || '').trim();
 
   return (
-    <Card className="border-slate-800 bg-slate-900/60">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+    <Card className="border-slate-200 bg-white shadow-xs">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
         <div className="flex items-center space-x-2">
-          <div className="p-1.5 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20">
+          <div className="p-1.5 rounded-lg bg-sky-50 text-sky-600 border border-sky-200">
             <FileText className="w-4 h-4" />
           </div>
-          <h3 className="text-sm font-bold text-slate-100">Personal Notes & Reflections</h3>
+          <h3 className="text-sm font-bold text-slate-900">Personal Notes & Reflections</h3>
         </div>
         {initialNotes && (
-          <span className="text-[11px] text-slate-400 font-medium">
+          <span className="text-[11px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
             Saved
           </span>
         )}
@@ -55,7 +55,7 @@ const QuestionNotes = ({ questionId, initialNotes = '', onNotesSaved }) => {
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Jot down algorithmic patterns, time complexity notes, edge cases to remember, or key interview talking points..."
-          className="w-full p-3 bg-slate-950/70 border border-slate-700/80 rounded-lg text-xs sm:text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all resize-y"
+          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all resize-y"
         />
 
         <div className="flex items-center justify-between">

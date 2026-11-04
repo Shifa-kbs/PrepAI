@@ -12,6 +12,7 @@ import InterviewRoom from '../components/interview/InterviewRoom';
 import InterviewReport from '../components/interview/InterviewReport';
 import InterviewHistory from '../components/interview/InterviewHistory';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import ErrorMessage from '../components/common/ErrorMessage';
 import {
   startMockInterview,
   getActiveMockInterview,
@@ -38,6 +39,7 @@ const InterviewPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
   const [evalError, setEvalError] = useState(null);
+  const [setupError, setSetupError] = useState(null);
 
   // Initialize: Check for query param interview or existing active interview
   useEffect(() => {
@@ -76,6 +78,7 @@ const InterviewPage = () => {
   const handleStartInterview = async (payload) => {
     setIsStarting(true);
     setEvalError(null);
+    setSetupError(null);
     try {
       const data = await startMockInterview(payload);
       if (data.success && data.interview) {
@@ -84,7 +87,9 @@ const InterviewPage = () => {
         toast.success(data.message || 'AI Mock Interview started!');
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to start mock interview');
+      const msg = err.response?.data?.message || 'Failed to start mock interview';
+      setSetupError(msg);
+      toast.error(msg);
     } finally {
       setIsStarting(false);
     }
@@ -195,13 +200,13 @@ const InterviewPage = () => {
     <div className="space-y-6">
       {/* Top Tab Bar (Hidden during active interview room to keep candidate focused) */}
       {tab !== 'room' && (
-        <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
+        <div className="flex items-center space-x-2 border-b border-slate-200 pb-3">
           <button
             onClick={() => setTab('setup')}
             className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
               tab === 'setup'
-                ? 'bg-purple-600 text-white shadow-sm shadow-purple-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                ? 'bg-sky-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             <Layers className="w-4 h-4" />
@@ -212,8 +217,8 @@ const InterviewPage = () => {
             onClick={() => setTab('history')}
             className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
               tab === 'history'
-                ? 'bg-purple-600 text-white shadow-sm shadow-purple-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                ? 'bg-sky-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             <History className="w-4 h-4" />
@@ -221,8 +226,8 @@ const InterviewPage = () => {
           </button>
 
           {completedInterview && tab === 'report' && (
-            <span className="flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-semibold bg-purple-500/10 text-purple-300 border border-purple-500/20">
-              <Award className="w-3.5 h-3.5" />
+            <span className="flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-semibold bg-sky-50 text-sky-800 border border-sky-200">
+              <Award className="w-3.5 h-3.5 text-sky-600" />
               <span>Executive Report</span>
             </span>
           )}
@@ -231,13 +236,20 @@ const InterviewPage = () => {
 
       {/* Render Active View */}
       {tab === 'setup' && (
-        <InterviewSetup
-          onStartInterview={handleStartInterview}
-          onResumeInterview={handleResumeInterview}
-          onDiscardActive={handleDiscardActive}
-          activeInterview={activeInterview}
-          isStarting={isStarting}
-        />
+        <div className="space-y-4">
+          {setupError && (
+            <div>
+              <ErrorMessage message={setupError} onRetry={() => setSetupError(null)} />
+            </div>
+          )}
+          <InterviewSetup
+            onStartInterview={handleStartInterview}
+            onResumeInterview={handleResumeInterview}
+            onDiscardActive={handleDiscardActive}
+            activeInterview={activeInterview}
+            isStarting={isStarting}
+          />
+        </div>
       )}
 
       {tab === 'room' && activeInterview && (

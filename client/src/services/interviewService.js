@@ -1,5 +1,10 @@
 import api from './api';
 
+export const getInterviewStatus = async () => {
+  const response = await api.get('/interview/status');
+  return response.data;
+};
+
 export const startMockInterview = async (payload) => {
   const response = await api.post('/interview/start', payload);
   return response.data;

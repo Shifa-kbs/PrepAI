@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Question = require('../models/Question');
 const QuestionProgress = require('../models/QuestionProgress');
 const User = require('../models/User');
+const { executeCode } = require('../services/codeExecutionService');
 
 // Helper to safely escape regex characters
 const escapeRegex = (text) => {
@@ -382,7 +383,14 @@ const getQuestionById = async (req, res, next) => {
 const submitAnswer = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { selectedAnswerIndex, action, revealSolution, timeSpentSeconds } = req.body;
+    const {
+      selectedAnswerIndex,
+      code,
+      language = 'javascript',
+      action,
+      revealSolution,
+      timeSpentSeconds,
+    } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -391,21 +399,7 @@ const submitAnswer = async (req, res, next) => {
       });
     }
 
-    const isRevealAction = action === 'reveal' || Boolean(revealSolution);
-
-    if (
-      !isRevealAction &&
-      (typeof selectedAnswerIndex !== 'number' ||
-        !Number.isInteger(selectedAnswerIndex) ||
-        selectedAnswerIndex < 0)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: 'selectedAnswerIndex must be a non-negative integer',
-      });
-    }
-
-    // Securely retrieve the question with correct answer and explanation
+    // Securely retrieve the question with correct answer, test cases, and explanation
     const question = await Question.findById(id).select(
       '+correctAnswerIndex +explanation +sampleAnswer'
     );
@@ -417,19 +411,79 @@ const submitAnswer = async (req, res, next) => {
       });
     }
 
-    if (
-      !isRevealAction &&
-      Array.isArray(question.options) &&
-      question.options.length > 0 &&
-      selectedAnswerIndex >= question.options.length
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: `Selected answer index ${selectedAnswerIndex} is out of bounds (0-${question.options.length - 1})`,
-      });
+    const isRevealAction = action === 'reveal' || Boolean(revealSolution);
+    let isCorrect = false;
+    let executionResult = null;
+
+    if (isRevealAction) {
+      isCorrect = false;
+    } else if (question.type === 'coding' || (code !== undefined && code !== null)) {
+      const submittedCode = typeof code === 'string' ? code : '';
+      if (!submittedCode.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Code cannot be empty for coding question submission',
+        });
+      }
+
+      let testCases = Array.isArray(question.testCases) && question.testCases.length > 0
+        ? question.testCases
+        : [];
+
+      if (testCases.length === 0) {
+        try {
+          const { allQuestions } = require('../data/questions');
+          const staticQ = allQuestions.find(
+            (q) => q.slug === question.slug || q.title === question.title
+          );
+          if (staticQ && Array.isArray(staticQ.testCases) && staticQ.testCases.length > 0) {
+            testCases = staticQ.testCases;
+          }
+        } catch {}
+      }
+
+      if (testCases.length === 0 && Array.isArray(question.examples) && question.examples.length > 0) {
+        testCases = question.examples.map((ex) => ({
+          input: ex.input || '',
+          expectedOutput: ex.output || '',
+          isHidden: false,
+        }));
+      }
+
+      executionResult = await executeCode({ language, code: submittedCode, testCases });
+      if (executionResult && executionResult.isUnavailable) {
+        return res.status(503).json({
+          success: false,
+          isUnavailable: true,
+          message: executionResult.summary,
+          error: executionResult.error,
+        });
+      }
+      isCorrect = Boolean(executionResult && executionResult.allPassed && executionResult.totalTests > 0);
+    } else if (Array.isArray(question.options) && question.options.length > 0) {
+      if (
+        typeof selectedAnswerIndex !== 'number' ||
+        !Number.isInteger(selectedAnswerIndex) ||
+        selectedAnswerIndex < 0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: 'selectedAnswerIndex must be a non-negative integer',
+        });
+      }
+
+      if (selectedAnswerIndex >= question.options.length) {
+        return res.status(400).json({
+          success: false,
+          message: `Selected answer index ${selectedAnswerIndex} is out of bounds (0-${question.options.length - 1})`,
+        });
+      }
+
+      isCorrect = selectedAnswerIndex === question.correctAnswerIndex;
+    } else {
+      isCorrect = true;
     }
 
-    const isCorrect = !isRevealAction && selectedAnswerIndex === question.correctAnswerIndex;
     const parsedTime = typeof timeSpentSeconds === 'number' && timeSpentSeconds > 0
       ? Math.round(timeSpentSeconds)
       : 0;
@@ -490,6 +544,7 @@ const submitAnswer = async (req, res, next) => {
       correctAnswerIndex: question.correctAnswerIndex,
       explanation: question.explanation || '',
       sampleAnswer: question.sampleAnswer || '',
+      executionResult,
       progress: {
         status: progress.status,
         attempts: progress.attempts,

@@ -40,6 +40,21 @@ export const abandonActiveSession = async () => {
   return response.data;
 };
 
+export const getQuestionAvailability = async (params = {}) => {
+  const response = await api.get('/practice/availability', { params });
+  return response.data;
+};
+
+export const saveLearningAssessment = async (payload) => {
+  const response = await api.post('/practice/learning-result', payload);
+  return response.data;
+};
+
+export const runCodeExecution = async (payload) => {
+  const response = await api.post('/practice/run-code', payload);
+  return response.data;
+};
+
 export default {
   startPracticeSession,
   getActivePracticeSession,
@@ -49,4 +64,6 @@ export default {
   finishPracticeSession,
   getPracticeHistory,
   abandonActiveSession,
+  runCodeExecution,
+  getQuestionAvailability,
 };

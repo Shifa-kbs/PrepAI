@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   History,
-  Trophy,
-  Calendar,
   Clock,
-  ArrowRight,
   RotateCcw,
-  CheckCircle2,
+  ChevronRight,
   AlertCircle,
 } from 'lucide-react';
 import Card from '../common/Card';
@@ -64,16 +61,16 @@ const PracticeHistory = ({ onSelectSession, onStartNew }) => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white flex items-center gap-2">
-            <History className="w-7 h-7 text-brand-400" />
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2">
+            <History className="w-7 h-7 text-sky-600" />
             <span>Practice Session History</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Review your past practice rounds, analyze accuracy trends, and revisit detailed explanations.
           </p>
         </div>
 
-        <Button variant="primary" size="sm" onClick={onStartNew} icon={RotateCcw} className="text-xs">
+        <Button variant="primary" size="sm" onClick={onStartNew} icon={RotateCcw} className="text-xs font-bold">
           New Session
         </Button>
       </div>
@@ -82,9 +79,9 @@ const PracticeHistory = ({ onSelectSession, onStartNew }) => {
       {loading ? (
         <LoadingSpinner label="Loading practice history..." />
       ) : error ? (
-        <Card className="p-6 bg-slate-900 border-rose-500/30 text-center space-y-3">
-          <AlertCircle className="w-6 h-6 text-rose-400 mx-auto" />
-          <p className="text-sm text-rose-300 font-medium">{error}</p>
+        <Card className="p-6 bg-white border-rose-200 text-center space-y-3 shadow-xs">
+          <AlertCircle className="w-6 h-6 text-rose-600 mx-auto" />
+          <p className="text-sm text-rose-800 font-bold">{error}</p>
           <Button variant="outline" size="sm" onClick={() => fetchHistory(1)}>
             Retry
           </Button>
@@ -99,56 +96,75 @@ const PracticeHistory = ({ onSelectSession, onStartNew }) => {
         />
       ) : (
         <div className="space-y-3">
-          {sessions.map((session) => (
-            <Card
-              key={session._id}
-              className="bg-slate-900/80 border-slate-800 hover:border-slate-700 transition-all p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-            >
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-brand-500/10 text-brand-300 border border-brand-500/20">
-                    {session.category}
-                  </span>
-                  <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-medium">
-                    {session.difficulty}
-                  </span>
-                  <span className="text-[11px] text-slate-500 flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {formatDate(session.completedAt)}
-                  </span>
-                </div>
+          {sessions.map((sess) => {
+            const isCompleted = sess.status === 'completed';
+            const answeredCount = (sess.answers || []).filter((a) => a.status !== 'skipped').length;
+            const accuracy = sess.accuracy ?? 0;
 
-                <div className="flex items-center space-x-4 text-xs text-slate-300">
-                  <span>
-                    <strong className="text-white">{session.totalQuestions}</strong> Questions
-                  </span>
-                  <span>•</span>
-                  <span>
-                    Score: <strong className="text-brand-400">{session.score}</strong>
-                  </span>
-                  <span>•</span>
-                  <span>
-                    Accuracy: <strong className="text-emerald-400">{session.accuracy}%</strong>
-                  </span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1 text-slate-400">
-                    <Clock className="w-3 h-3" />
-                    {formatDuration(session.timeTakenSeconds || 0)}
-                  </span>
-                </div>
-              </div>
+            let badgeColor = 'bg-slate-100 text-slate-700 border-slate-200';
+            if (accuracy >= 80) badgeColor = 'bg-emerald-50 text-emerald-800 border-emerald-300';
+            else if (accuracy >= 50) badgeColor = 'bg-sky-50 text-sky-800 border-sky-300';
+            else if (accuracy > 0) badgeColor = 'bg-amber-50 text-amber-800 border-amber-300';
 
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => onSelectSession(session._id)}
-                icon={ArrowRight}
-                className="text-xs shrink-0"
+            return (
+              <Card
+                key={sess._id}
+                className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border-slate-200 hover:border-sky-300 hover:shadow-md transition-all shadow-xs"
               >
-                Review Summary
-              </Button>
-            </Card>
-          ))}
+                <div className="space-y-2 flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-bold text-sky-600">
+                      {sess.category}
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                      {sess.mode === 'mixed' ? 'Mixed Placement Test' : 'Topic Practice'}
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                      {sess.difficulty}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{formatDuration(sess.timeTakenSeconds || 0)}</span>
+                    </span>
+                    <span>•</span>
+                    <span>
+                      {answeredCount} of {sess.totalQuestions} Questions Answered
+                    </span>
+                    <span>•</span>
+                    <span>{formatDate(sess.completedAt || sess.createdAt)}</span>
+                  </div>
+                </div>
+
+                {/* Score & View CTA */}
+                <div className="flex items-center space-x-4 shrink-0 sm:border-l sm:border-slate-100 sm:pl-5">
+                  <div className="text-right">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl font-black text-slate-900">{sess.score || 0} pts</span>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded border ${badgeColor}`}>
+                        {accuracy}%
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
+                      {isCompleted ? 'Finished' : 'Incomplete'}
+                    </span>
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onSelectSession(sess._id)}
+                    className="text-xs font-bold"
+                  >
+                    <span>Review</span>
+                    <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

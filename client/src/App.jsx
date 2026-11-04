@@ -15,6 +15,7 @@ import QuestionBankPage from './pages/QuestionBankPage';
 import QuestionDetailPage from './pages/QuestionDetailPage';
 import PracticePage from './pages/PracticePage';
 import AptitudePage from './pages/AptitudePage';
+import LearningPage from './pages/LearningPage';
 import InterviewPage from './pages/InterviewPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import StudyPlanPage from './pages/StudyPlanPage';
@@ -33,22 +34,23 @@ function App() {
           toastOptions={{
             duration: 4000,
             style: {
-              background: '#0f172a',
-              color: '#f8fafc',
-              border: '1px solid #334155',
+              background: '#ffffff',
+              color: '#0f172a',
+              border: '1px solid #e2e8f0',
               borderRadius: '0.75rem',
               fontSize: '0.875rem',
+              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
             },
             success: {
               iconTheme: {
                 primary: '#10b981',
-                secondary: '#0f172a',
+                secondary: '#ffffff',
               },
             },
             error: {
               iconTheme: {
                 primary: '#f43f5e',
-                secondary: '#0f172a',
+                secondary: '#ffffff',
               },
             },
           }}
@@ -66,6 +68,8 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/learn" element={<LearningPage />} />
+            <Route path="/learning" element={<LearningPage />} />
             <Route path="/questions" element={<QuestionBankPage />} />
             <Route path="/questions/:id" element={<QuestionDetailPage />} />
             <Route path="/practice" element={<PracticePage />} />

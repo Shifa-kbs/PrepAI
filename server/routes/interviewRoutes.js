@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {
+  getInterviewStatus,
   startInterview,
   getActiveInterview,
   getInterviewById,
@@ -16,6 +17,7 @@ const { protect } = require('../middleware/authMiddleware');
 // All interview endpoints strictly require authentication
 router.use(protect);
 
+router.get('/status', getInterviewStatus);
 router.post('/start', startInterview);
 router.get('/active', getActiveInterview);
 router.get('/history', getInterviewHistory);

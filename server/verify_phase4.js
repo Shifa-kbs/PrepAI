@@ -63,6 +63,27 @@ async function runPhase4Verification() {
     const password = 'Password123!';
 
     try {
+      // Wait for Mongoose connection if currently connecting
+      if (mongoose.connection.readyState !== 1) {
+        console.log(`[Setup] Waiting for MongoDB connection (current readyState: ${mongoose.connection.readyState})...`);
+        await new Promise((resolve, reject) => {
+          if (mongoose.connection.readyState === 1) return resolve();
+          const timer = setTimeout(() => {
+            if (mongoose.connection.readyState === 1) resolve();
+            else reject(new Error(`Timed out waiting for MongoDB connection (readyState: ${mongoose.connection.readyState})`));
+          }, 8000);
+          mongoose.connection.once('connected', () => {
+            clearTimeout(timer);
+            resolve();
+          });
+          mongoose.connection.once('error', (err) => {
+            clearTimeout(timer);
+            reject(err);
+          });
+        });
+        console.log('✅ MongoDB connection ready');
+      }
+
       // 1. Setup: Register User A and User B
       console.log('\n[Step 1] Registering test users (Alice & Bob)...');
       const regA = await makeRequest(
@@ -347,29 +368,31 @@ async function runPhase4Verification() {
       }
       console.log(`✅ Selecting 10 questions verified: Created session with exactly 10 questions (Mixed mode).`);
 
-      // 12e. Test Insufficient Questions Case (requesting 10 questions in DSA where only 3 exist)
+      // 12e. Test Insufficient Questions Case (requesting more questions than available in DSA)
+      const totalDSA = await Question.countDocuments({ category: 'DSA' });
+      const requestedMoreThanAvailable = Math.min(50, totalDSA + 5);
       const resInsufficient = await makeRequest(
         `${baseUrl}/practice/start`,
         'POST',
-        JSON.stringify({ mode: 'topic', category: 'DSA', questionCount: 10, forceNew: true }),
+        JSON.stringify({ mode: 'topic', category: 'DSA', questionCount: requestedMoreThanAvailable, forceNew: true }),
         headersA
       );
       if (resInsufficient.status !== 201) {
         throw new Error(`Expected 201 for insufficient questions start, got ${resInsufficient.status}`);
       }
       const insufficientSession = resInsufficient.body.session;
-      if (insufficientSession.totalQuestions !== 3 || insufficientSession.questions.length !== 3) {
-        throw new Error(`Expected 3 questions in partial session, got ${insufficientSession.totalQuestions}`);
+      if (insufficientSession.totalQuestions !== totalDSA || insufficientSession.questions.length !== totalDSA) {
+        throw new Error(`Expected ${totalDSA} questions in partial session, got ${insufficientSession.totalQuestions}`);
       }
       if (
         resInsufficient.body.isPartial !== true ||
-        resInsufficient.body.requestedCount !== 10 ||
-        resInsufficient.body.availableCount !== 3 ||
-        !resInsufficient.body.message.includes('only 3 eligible questions')
+        resInsufficient.body.requestedCount !== requestedMoreThanAvailable ||
+        resInsufficient.body.availableCount !== totalDSA ||
+        !resInsufficient.body.message.includes(`only ${totalDSA} eligible questions`)
       ) {
         throw new Error(`Expected transparent isPartial metadata, got: ${JSON.stringify(resInsufficient.body)}`);
       }
-      console.log(`✅ Insufficient-question case verified: Requested 10 in DSA (3 available) -> returned 3 questions with isPartial=true, requestedCount=10, availableCount=3, and transparent user message.`);
+      console.log(`✅ Insufficient-question case verified: Requested ${requestedMoreThanAvailable} in DSA (${totalDSA} available) -> returned ${totalDSA} questions with isPartial=true, requestedCount=${requestedMoreThanAvailable}, availableCount=${totalDSA}, and transparent user message.`);
 
       // Discard active session before checking history & cleanup
       await makeRequest(`${baseUrl}/practice/abandon`, 'POST', null, headersA);

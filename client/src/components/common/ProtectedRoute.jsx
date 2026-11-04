@@ -19,7 +19,7 @@ const ProtectedRoute = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
+    <div className="min-h-screen bg-white text-slate-800 flex flex-col">
       <Navbar onOpenMobileMenu={() => setMobileMenuOpen(true)} />
       <div className="flex flex-1">
         <Sidebar />

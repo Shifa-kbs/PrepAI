@@ -34,34 +34,34 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 selection:bg-brand-500 selection:text-white">
+    <div className="min-h-screen bg-slate-50/50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 selection:bg-sky-500 selection:text-white">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <Link to="/" className="inline-flex items-center space-x-2 group mb-6">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center text-white shadow-lg shadow-brand-600/30 group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-sky-500 flex items-center justify-center text-white shadow-md shadow-sky-500/20 group-hover:scale-105 transition-transform">
             <Sparkles className="w-6 h-6" />
           </div>
-          <span className="text-2xl font-extrabold text-white">
-            Prep<span className="text-brand-500">AI</span>
+          <span className="text-2xl font-extrabold text-slate-900">
+            Prep<span className="text-sky-500">AI</span>
           </span>
         </Link>
-        <h2 className="text-2xl font-bold tracking-tight text-slate-100">Reset Password</h2>
-        <p className="mt-1.5 text-xs text-slate-400">
+        <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">Reset Password</h2>
+        <p className="mt-1.5 text-xs text-slate-500">
           Enter your registered email address to receive password recovery instructions
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
-        <Card>
+        <Card className="border border-slate-200/80 shadow-md">
           {error && <ErrorMessage message={error} className="mb-4" />}
 
           {submitted ? (
             <div className="text-center py-4 space-y-4">
-              <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+              <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-semibold text-slate-100">Check Your Email</h3>
-              <p className="text-xs text-slate-400 max-w-xs mx-auto leading-relaxed">
-                If an account exists for <span className="text-slate-200 font-medium">{email}</span>, a password reset link has been generated.
+              <h3 className="text-base font-bold text-slate-900">Check Your Email</h3>
+              <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+                If an account exists for <span className="text-slate-800 font-semibold">{email}</span>, a password reset link has been generated.
               </p>
               <div className="pt-2">
                 <Link to="/login">
@@ -101,7 +101,7 @@ const ForgotPasswordPage = () => {
               <div className="pt-2 text-center">
                 <Link
                   to="/login"
-                  className="inline-flex items-center text-xs text-slate-400 hover:text-slate-200"
+                  className="inline-flex items-center text-xs font-semibold text-slate-500 hover:text-sky-600"
                 >
                   <ArrowLeft className="w-3.5 h-3.5 mr-1" />
                   Back to Sign In

@@ -27,11 +27,16 @@ export const AuthProvider = ({ children }) => {
           }
         } catch (error) {
           console.error('Session restoration failed:', error);
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          setToken(null);
-          setUser(null);
-          setIsAuthenticated(false);
+          if (error.response?.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            setToken(null);
+            setUser(null);
+            setIsAuthenticated(false);
+          } else {
+            // Keep authenticated state from localStorage during temporary network or DB startup delay
+            setIsAuthenticated(true);
+          }
         }
       } else {
         setIsAuthenticated(false);
@@ -58,7 +63,16 @@ export const AuthProvider = ({ children }) => {
       toast.success(message || 'Welcome back!');
       return { success: true, user: userData };
     } catch (error) {
-      const errMsg = error.response?.data?.message || 'Login failed. Please check your credentials.';
+      let errMsg = error.response?.data?.message || 'Login failed. Please check your credentials.';
+      if (
+        error.response?.status === 503 ||
+        error.response?.data?.code === 'DATABASE_UNAVAILABLE' ||
+        errMsg.includes('buffering timed out')
+      ) {
+        errMsg =
+          error.response?.data?.message ||
+          'Database connection failed. Please ensure your MongoDB Atlas cluster is online and your current IP address is whitelisted in Network Access.';
+      }
       toast.error(errMsg);
       return { success: false, error: errMsg };
     } finally {
@@ -82,7 +96,16 @@ export const AuthProvider = ({ children }) => {
       toast.success(message || 'Account created successfully!');
       return { success: true, user: userData };
     } catch (error) {
-      const errMsg = error.response?.data?.message || 'Registration failed. Please try again.';
+      let errMsg = error.response?.data?.message || 'Registration failed. Please try again.';
+      if (
+        error.response?.status === 503 ||
+        error.response?.data?.code === 'DATABASE_UNAVAILABLE' ||
+        errMsg.includes('buffering timed out')
+      ) {
+        errMsg =
+          error.response?.data?.message ||
+          'Database connection failed. Please ensure your MongoDB Atlas cluster is online and your current IP address is whitelisted in Network Access.';
+      }
       toast.error(errMsg);
       return { success: false, error: errMsg };
     } finally {

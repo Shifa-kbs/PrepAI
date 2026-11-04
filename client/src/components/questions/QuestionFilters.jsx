@@ -1,23 +1,21 @@
 import React from 'react';
-import { Search, X, Filter, RotateCcw } from 'lucide-react';
+import { Search, X, RotateCcw } from 'lucide-react';
 
 const CATEGORIES = [
   'All Categories',
   'DSA',
   'Java',
   'Python',
+  'C++',
+  'JavaScript',
   'SQL',
   'DBMS',
   'Operating Systems',
   'Computer Networks',
   'OOP',
-  'JavaScript',
-  'React',
-  'Web Development',
   'Quantitative Aptitude',
   'Logical Reasoning',
   'Verbal Ability',
-  'HR',
 ];
 
 const DIFFICULTIES = ['All Difficulties', 'Easy', 'Medium', 'Hard'];
@@ -54,7 +52,7 @@ const QuestionFilters = ({
     savedOnly === true;
 
   return (
-    <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-4 shadow-lg shadow-black/20">
+    <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 space-y-4 shadow-xs">
       {/* Top Row: Search & Saved Toggle */}
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
         {/* Search Input */}
@@ -65,12 +63,12 @@ const QuestionFilters = ({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search questions by title, keyword, or concept..."
-            className="w-full pl-10 pr-10 py-2.5 bg-slate-950/60 border border-slate-700/80 rounded-lg text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all"
+            className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:bg-white transition-all"
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5 rounded"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-0.5 rounded cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -81,13 +79,13 @@ const QuestionFilters = ({
         <button
           type="button"
           onClick={() => setSavedOnly(!savedOnly)}
-          className={`flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-lg border text-xs font-semibold transition-all shrink-0 ${
+          className={`flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-lg border text-xs font-semibold transition-all shrink-0 cursor-pointer ${
             savedOnly
-              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm shadow-amber-500/10'
-              : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white'
+              ? 'bg-amber-50 text-amber-800 border-amber-300 shadow-xs'
+              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
           }`}
         >
-          <span className={`w-2 h-2 rounded-full ${savedOnly ? 'bg-amber-400' : 'bg-slate-500'}`} />
+          <span className={`w-2 h-2 rounded-full ${savedOnly ? 'bg-amber-500' : 'bg-slate-400'}`} />
           <span>Bookmarked Only</span>
         </button>
 
@@ -96,7 +94,7 @@ const QuestionFilters = ({
           <button
             type="button"
             onClick={onReset}
-            className="flex items-center justify-center space-x-1.5 px-3 py-2.5 rounded-lg bg-rose-500/10 text-rose-300 border border-rose-500/20 hover:bg-rose-500/20 text-xs font-medium transition-all shrink-0"
+            className="flex items-center justify-center space-x-1.5 px-3 py-2.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 text-xs font-semibold transition-all shrink-0 cursor-pointer"
             title="Reset All Filters"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -109,19 +107,18 @@ const QuestionFilters = ({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
         {/* Category Filter */}
         <div>
-          <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
             Category
           </label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full px-2.5 py-2 bg-slate-950/80 border border-slate-700/80 rounded-lg text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer"
+            className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white cursor-pointer"
           >
             {CATEGORIES.map((cat) => (
               <option
                 key={cat}
                 value={cat === 'All Categories' ? 'all' : cat}
-                className="bg-slate-900 text-slate-200"
               >
                 {cat}
               </option>
@@ -131,19 +128,18 @@ const QuestionFilters = ({
 
         {/* Difficulty Filter */}
         <div>
-          <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
             Difficulty
           </label>
           <select
             value={difficulty}
             onChange={(e) => setDifficulty(e.target.value)}
-            className="w-full px-2.5 py-2 bg-slate-950/80 border border-slate-700/80 rounded-lg text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer"
+            className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white cursor-pointer"
           >
             {DIFFICULTIES.map((diff) => (
               <option
                 key={diff}
                 value={diff === 'All Difficulties' ? 'all' : diff}
-                className="bg-slate-900 text-slate-200"
               >
                 {diff}
               </option>
@@ -153,19 +149,19 @@ const QuestionFilters = ({
 
         {/* Company Filter */}
         <div>
-          <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
             Company
           </label>
           <select
             value={company}
             onChange={(e) => setCompany(e.target.value)}
-            className="w-full px-2.5 py-2 bg-slate-950/80 border border-slate-700/80 rounded-lg text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer"
+            className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white cursor-pointer"
           >
-            <option value="all" className="bg-slate-900 text-slate-200">
+            <option value="all">
               All Companies
             </option>
             {availableCompanies.map((c) => (
-              <option key={c} value={c} className="bg-slate-900 text-slate-200">
+              <option key={c} value={c}>
                 {c}
               </option>
             ))}
@@ -174,19 +170,18 @@ const QuestionFilters = ({
 
         {/* Solved Status Filter */}
         <div>
-          <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
             Status
           </label>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="w-full px-2.5 py-2 bg-slate-950/80 border border-slate-700/80 rounded-lg text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer"
+            className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white cursor-pointer"
           >
             {STATUS_OPTIONS.map((opt) => (
               <option
                 key={opt.value}
                 value={opt.value}
-                className="bg-slate-900 text-slate-200"
               >
                 {opt.label}
               </option>
